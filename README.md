@@ -4,7 +4,9 @@
 
 Source: [Wikipedia](https://en.wikipedia.org/wiki/Tafl_games#Reconstruction)
 
-* The game is played on a 9×9 board. Initial setup is as [shown](board.png).
+![board](board.png)
+
+* The game is played on a 9×9 board. Initial setup is as shown.
 * The king starts on the central square or castle, called the konakis, which no other piece may ever occupy.
 * The eight defenders, called Swedes, start on the eight squares adjoining the konakis, in the form of a cross.
 * The sixteen attackers, called Muscovites, start in groups of four at the centre of each edge of the board. (In Linnaeus' notes, these squares were embroidered to signify them as the domain of the Muscovites.)
