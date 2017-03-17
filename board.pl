@@ -6,15 +6,15 @@
 
 % empty_board(-Board)
 empty_board([
-  [emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell],
-  [emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell],
-  [emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell],
-  [emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell],
-  [emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell],
-  [emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell],
-  [emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell],
-  [emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell],
-  [emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell]
+  [emptyCell, emptyCell, emptyCell, atkarea, atkarea, atkarea, emptyCell, emptyCell, emptyCell],
+  [emptyCell, emptyCell, emptyCell, emptyCell, atkarea, emptyCell, emptyCell, emptyCell, emptyCell],
+  [emptyCell, emptyCell, emptyCell, emptyCell, defarea, emptyCell, emptyCell, emptyCell, emptyCell],
+  [atkarea, emptyCell, emptyCell, emptyCell, defarea, emptyCell, emptyCell, emptyCell, atkarea],
+  [atkarea, atkarea, defarea, defarea, castle, defarea, defarea, atkarea, atkarea],
+  [atkarea, emptyCell, emptyCell, emptyCell, defarea, emptyCell, emptyCell, emptyCell, atkarea],
+  [emptyCell, emptyCell, emptyCell, emptyCell, defarea, emptyCell, emptyCell, emptyCell, emptyCell],
+  [emptyCell, emptyCell, emptyCell, emptyCell, atkarea, emptyCell, emptyCell, emptyCell, emptyCell],
+  [emptyCell, emptyCell, emptyCell, atkarea, atkarea, atkarea, emptyCell, emptyCell, emptyCell]
 ]).
 
 % initial_board(-Board)
@@ -126,6 +126,20 @@ printBoard(Board):-
 
 
 /**
+* Remove piece from board
+*
+* @param +Board Board
+* @param +Col Column of piece to remove
+* @param +Row Row of piece to remove
+* @param -NBoard New board after removal
+*/
+remove(Board, Col, Row, NBoard):-
+  empty_board(EBoard),
+  find(Col, Row, EBoard, Piece),
+  replace(Col, Row, Board, Piece, NBoard).
+
+
+/**
 * Moves a board piece
 *
 * @param +Board Board
@@ -133,9 +147,9 @@ printBoard(Board):-
 * @param +ORow Original (current) row of piece to move
 * @param +NCol New column for selected piece
 * @param +NRow New row for selected piece
-* @param -NBoard New board after piece is moved
+* @param -NBoard New board after movement
 */
 move(Board, OCol, ORow, NCol, NRow, NBoard):-
   find(OCol, ORow, Board, Piece),
   replace(NCol, NRow, Board, Piece, AuxBoard),
-  replace(OCol, ORow, AuxBoard, emptyCell, NBoard).
+  remove(AuxBoard, OCol, ORow, NBoard).
