@@ -1,4 +1,4 @@
-# IART
+# Tablut
 
 ## Game Rules
 
