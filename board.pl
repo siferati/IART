@@ -1,3 +1,8 @@
+/**
+* This file implements all of Board predicates
+*/
+
+% empty_board(-Board)
 empty_board([
   [emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell],
   [emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell],
@@ -10,6 +15,7 @@ empty_board([
   [emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell]
 ]).
 
+% initial_board(-Board)
 initial_board([
   [emptyCell, emptyCell, emptyCell, attacker, attacker, attacker, emptyCell, emptyCell, emptyCell],
   [emptyCell, emptyCell, emptyCell, emptyCell, attacker, emptyCell, emptyCell, emptyCell, emptyCell],
@@ -22,25 +28,52 @@ initial_board([
   [emptyCell, emptyCell, emptyCell, attacker, attacker, attacker, emptyCell, emptyCell, emptyCell]
 ]).
 
-% toChar(+value, -char)
+
+% toChar(+Value, -Char)
 toChar(emptyCell, ' ').
 toChar(king, 'K').
 toChar(defender, 'D').
 toChar(attacker, 'A').
+toChar(castle, 'C').
+toChar(defarea, 'O').
+toChar(atkarea, 'X').
+
 
 /**
-* Prints horizontal separators of board
+* Prints horizontal board separators
 *
 * @param +Type Separator to print
 */
-printSeparator(top):-
-  write(' _____________________________________________________ ').
+printSeparator(topmost):-
+  write('    _____________________________________________________ ').
 
 printSeparator(bottom):-
-  write('|_____|_____|_____|_____|_____|_____|_____|_____|_____|').
+  write('   |_____|_____|_____|_____|_____|_____|_____|_____|_____|').
 
-printSeparator(space):-
-  write('|     |     |     |     |     |     |     |     |     |').
+printSeparator(top):-
+  write('   |     |     |     |     |     |     |     |     |     |').
+
+printSeparator(inline):-
+  write('  |').
+
+printSeparator(linestart):-
+  write('|').
+
+
+/**
+* Print column identifiers
+*/
+printColIds:-
+  write('      A     B     C     D     E     F     G     H     I   ').
+
+
+/**
+* Get list of row identifiers to print
+*
+* @param -List List of row ids
+*/
+getRowIds([' 1 ', ' 2 ', ' 3 ', ' 4 ', ' 5 ', ' 6 ', ' 7 ', ' 8 ', ' 9 ']).
+
 
 /*
 * Prints a line of the board
@@ -56,7 +89,7 @@ printLine([H | T]):-
   write('  '),
   toChar(H, C),
   write(C),
-  write('  |'),
+  printSeparator(inline),
   printLine(T).
 
 
@@ -64,19 +97,27 @@ printLine([H | T]):-
 * Prints board to the terminal
 *
 * @param +Board List of lists to print
+* @param +RowIds List of row identifiers to print
 */
 
-% interface
-printBoard(Board):-
-  printSeparator(top), nl,
-  printBoardAux(Board).
-
 % stop condition
-printBoardAux([]).
+printBoard([], []).
 
 % main
-printBoardAux([H | T]):-
-  printSeparator(space), nl,
-  write('|'), printLine(H), nl,
+printBoard([H | T], [RH | RT]):-
+  printSeparator(top), nl,
+  write(RH), printSeparator(linestart), printLine(H), nl,
   printSeparator(bottom), nl,
-  printBoardAux(T).
+  printBoard(T, RT).
+
+
+/**
+* Interface for printBoard/2
+*
+* @param +Board List of lists to print
+*/
+printBoard(Board):-
+  printColIds, nl,
+  getRowIds(RowIds),
+  printSeparator(topmost), nl,
+  printBoard(Board, RowIds).
