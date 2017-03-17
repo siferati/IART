@@ -2,6 +2,8 @@
 * This file implements all of Board predicates
 */
 
+:- ensure_loaded('utils.pl').
+
 % empty_board(-Board)
 empty_board([
   [emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell],
@@ -125,6 +127,15 @@ printBoard(Board):-
 
 /**
 * Moves a board piece
+*
+* @param +Board Board
+* @param +OCol Original (current) column of piece to move
+* @param +ORow Original (current) row of piece to move
+* @param +NCol New column for selected piece
+* @param +NRow New row for selected piece
+* @param -NBoard New board after piece is moved
 */
-
-%move(Board, OCol, ORow, NCol, NRow).
+move(Board, OCol, ORow, NCol, NRow, NBoard):-
+  find(OCol, ORow, Board, Piece),
+  replace(NCol, NRow, Board, Piece, AuxBoard),
+  replace(OCol, ORow, AuxBoard, emptyCell, NBoard).

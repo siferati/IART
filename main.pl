@@ -3,8 +3,17 @@
 */
 
 :- ensure_loaded('board.pl').
-:- ensure_loaded('utils.pl').
 
 main:-
   initial_board(Board),
   printBoard(Board).
+
+
+
+
+
+
+test:-
+  initial_board(Board),
+  move(Board, 4, 4, 6, 6, NBoard),
+  printBoard(NBoard).
