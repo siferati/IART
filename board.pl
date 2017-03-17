@@ -121,3 +121,10 @@ printBoard(Board):-
   getRowIds(RowIds),
   printSeparator(topmost), nl,
   printBoard(Board, RowIds).
+
+
+/**
+* Moves a board piece
+*/
+
+%move(Board, OCol, ORow, NCol, NRow).

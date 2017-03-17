@@ -3,6 +3,7 @@
 */
 
 :- ensure_loaded('board.pl').
+:- ensure_loaded('utils.pl').
 
 main:-
   initial_board(Board),
