@@ -71,11 +71,18 @@ printColIds:-
 
 /**
 * Get list of row identifiers to print
+* (length MUST be the same as board rows!)
 *
 * @param -List List of row ids
 */
 getRowIds([' 1 ', ' 2 ', ' 3 ', ' 4 ', ' 5 ', ' 6 ', ' 7 ', ' 8 ', ' 9 ']).
 
+
+/**
+* Get list containing information to display to the user
+* (length MUST be the same as board rows!)
+*/
+getInfo(['A - Attacker', 'D - Defender', 'K - King', 'O - Defenders Area', 'X - Attackers Area', 'C - Castle', '', '', '']).
 
 /*
 * Prints a line of the board
@@ -100,33 +107,37 @@ printLine([H | T]):-
 *
 * @param +Board List of lists to print
 * @param +RowIds List of row identifiers to print
+* @param +Info List containing information to display to the user
 */
 
 % stop condition
-printBoard([], []).
+printBoard([], [], []).
 
 % main
-printBoard([H | T], [RH | RT]):-
+printBoard([H | T], [RH | RT], [IH | IT]):-
   printSeparator(top), nl,
-  write(RH), printSeparator(linestart), printLine(H), nl,
+  write(RH), printSeparator(linestart), printLine(H),
+  write('     '), write(IH), nl,
   printSeparator(bottom), nl,
-  printBoard(T, RT).
+  printBoard(T, RT, IT).
 
 
 /**
-* Interface for printBoard/2
+* Interface for printBoard/3
 *
 * @param +Board List of lists to print
 */
 printBoard(Board):-
   printColIds, nl,
   getRowIds(RowIds),
+  getInfo(Info),
   printSeparator(topmost), nl,
-  printBoard(Board, RowIds).
+  printBoard(Board, RowIds, Info).
 
 
 /**
-* Remove piece from board
+* Removes a piece from the board
+* And replace it with corresponding area
 *
 * @param +Board Board
 * @param +Col Column of piece to remove
