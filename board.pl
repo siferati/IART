@@ -4,6 +4,7 @@
 
 :- ensure_loaded('utils.pl').
 
+
 % empty_board(-Board)
 empty_board([
   [emptyCell, emptyCell, emptyCell, atkarea, atkarea, atkarea, emptyCell, emptyCell, emptyCell],
@@ -83,6 +84,7 @@ getRowIds([' 1 ', ' 2 ', ' 3 ', ' 4 ', ' 5 ', ' 6 ', ' 7 ', ' 8 ', ' 9 ']).
 * (length MUST be the same as board rows!)
 */
 getInfo(['A - Attacker', 'D - Defender', 'K - King', 'O - Defenders Area', 'X - Attackers Area', 'C - Castle', '', '', '']).
+
 
 /*
 * Prints a line of the board
