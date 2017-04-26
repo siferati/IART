@@ -1,5 +1,11 @@
 # Tablut
 
+## How to run
+
+* Open ``SICStus`` inside project folder
+* Type ``['main.pl'].``
+* Type ``main.``
+
 ## Game Rules
 
 Source: [Wikipedia](https://en.wikipedia.org/wiki/Tafl_games#Reconstruction)
