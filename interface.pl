@@ -9,8 +9,6 @@
 exitCode(101).
 
 
-exit(exit).
-
 /**
 * Reads input (char), ignoring trailing \n
 *
@@ -79,10 +77,10 @@ readPos(_, _, exit).
 */
 
 % everything is good, move forward
-statusHandler(good).
+readPosHandler(good).
 
 % exit button pressed, go back to main menu
-statusHandler(exit):-
+readPosHandler(exit):-
   get_code(_), % clear trailing \n from buffer
   main.
 
@@ -96,12 +94,28 @@ statusHandler(exit):-
 * @param -NewRow Destination row of selected piece
 */
 askPos(Col, Row, NewCol, NewRow):-
-  write('Choose a piece to move (e.g. A1)'), nl,
+  write('Choose a piece to move. (e.g. A1)\nPress \'e\' to exit.\n'),
   readPos(Col, Row, Status1),
-  statusHandler(Status1),
-  write('Where do you want to place the piece? (e.g. B2)'), nl,
+  readPosHandler(Status1),
+  write('\nWhere do you want to place the piece? (e.g. B2)\nPress \'e\' to exit.\n'),
   readPos(NewCol, NewRow, Status2),
-  statusHandler(Status2).
+  readPosHandler(Status2).
+
+
+/**
+* Decides how to act based on the startmenu selected option
+*
+* @param +Code ASCII Code of pressed key
+*/
+
+% exit button pressed, close the program
+startmenuHandler(Code):-
+  exitCode(Code),
+  write('Exited program. Goodbye.'),
+  abort.
+
+% random key pressed, move forward
+startmenuHandler(_).
 
 
 /**
@@ -115,4 +129,5 @@ startmenu:-
   write(' *                                              *'), nl,
   write(' ************************************************'), nl,
   nl,
-  get_code(_).
+  get_code(Code),
+  startmenuHandler(Code).

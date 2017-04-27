@@ -33,9 +33,8 @@ main:-
   startmenu,
   initial_board(Board),
   printBoard(Board),
-  \+gameloop(Board).
-
-
+  gameloop(Board),
+  main.
 
 
 /**
