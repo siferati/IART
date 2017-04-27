@@ -11,6 +11,8 @@
 *
 * @param +Board Current state of the game board
 */
+
+% main
 gameloop(Board):-
 
   % process input
@@ -25,10 +27,15 @@ gameloop(Board):-
   % repeat
   gameloop(NewBoard).
 
+% when gameloop fails (ie user pressed exit button)
+gameloop(_).
+
 
 /**
 * Main entry for the program
 */
+
+% main
 main:-
   startmenu,
   initial_board(Board),
@@ -36,14 +43,5 @@ main:-
   gameloop(Board),
   main.
 
-
-/**
-* TESTING
-*/
-
-test_move:-
-  initial_board(Board),
-  move(Board, 4, 4, 6, 6, Board1),
-  move(Board1, 5, 4, 5, 8, Board2),
-  move(Board2, 1, 4, 0, 0, Board3),
-  printBoard(Board3).
+% when main fails (ie user pressed exit button)
+main.

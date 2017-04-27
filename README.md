@@ -10,7 +10,7 @@
 
 Source: [Wikipedia](https://en.wikipedia.org/wiki/Tafl_games#Reconstruction)
 
-![board](board.png)
+![board](res/board.png)
 
 * The game is played on a 9×9 board. Initial setup is as shown.
 * The king starts on the central square or castle, called the konakis, which no other piece may ever occupy.
