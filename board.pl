@@ -130,11 +130,13 @@ printBoard([H | T], [RH | RT], [IH | IT]):-
 * @param +Board List of lists to print
 */
 printBoard(Board):-
+  nl,
   printColIds, nl,
   getRowIds(RowIds),
   getInfo(Info),
   printSeparator(topmost), nl,
-  printBoard(Board, RowIds, Info).
+  printBoard(Board, RowIds, Info),
+  nl.
 
 
 /**

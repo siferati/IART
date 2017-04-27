@@ -7,12 +7,33 @@
 
 
 /**
+* Game Loop - Where the magic happens
+*
+* @param +Board Current state of the game board
+*/
+gameloop(Board):-
+
+  % process input
+  askPos(Col, Row, NewCol, NewRow),
+
+  % update
+  move(Board, Col, Row, NewCol, NewRow, NewBoard),
+
+  % render
+  printBoard(NewBoard),
+
+  % repeat
+  gameloop(NewBoard).
+
+
+/**
 * Main entry for the program
 */
 main:-
   startmenu,
   initial_board(Board),
-  printBoard(Board).
+  printBoard(Board),
+  \+gameloop(Board).
 
 
 
