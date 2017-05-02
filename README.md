@@ -2,9 +2,11 @@
 
 ## How to run
 
-* Open ``SICStus`` inside project folder
+* Open SICStus inside ``src/`` folder
 * Type ``['main.pl'].``
 * Type ``main.``
+
+**Note:** Maximize the terminal for a better experience.
 
 ## Game Rules
 
