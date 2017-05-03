@@ -168,3 +168,19 @@ move(Board, OCol, ORow, NCol, NRow, NBoard):-
   find(OCol, ORow, Board, Piece),
   replace(NCol, NRow, Board, Piece, AuxBoard),
   remove(AuxBoard, OCol, ORow, NBoard).
+
+
+/**
+* Checks if a play is valid
+*
+* @param +Board Board
+* @param +OCol Original (current) column of piece to move
+* @param +ORow Original (current) row of piece to move
+* @param +NCol New column for selected piece
+* @param +NRow New row for selected piece
+*/
+validatePlay(Board, OCol, ORow, NCol, NRow):-
+  find(OCol, ORow, Board, Piece),
+  Piece \= emptyCell,
+  find(NCol, NRow, Board, NPiece),
+  NPiece = emptyCell.

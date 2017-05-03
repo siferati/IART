@@ -7,20 +7,6 @@
 
 
 /**
-* Decides how to act based on the exit status of askPos/5
-*
-* @param +Status Exit status of askPos/5
-*/
-
-% everything good, continue
-askPosHandler(good).
-
-% return to startmenu
-askPosHandler(exit):- fail. % gameloop fails > main fails > enters 2nd clause for main
-
-
-
-/**
 * Game Loop - Where the magic happens
 *
 * @param +Board Current state of the game board
@@ -29,34 +15,36 @@ askPosHandler(exit):- fail. % gameloop fails > main fails > enters 2nd clause fo
 % main
 gameloop(Board):-
 
-  % process input
-  askPos(Col, Row, NewCol, NewRow, Status),
-  askPosHandler(Status),
+  % repeat until user inputs a valid play
+  repeat,
 
-  % update
-  move(Board, Col, Row, NewCol, NewRow, NewBoard),
+    % process input
+    askPos(Col, Row, NewCol, NewRow, Status),
 
-  % render
-  printBoard(NewBoard),
+    % if user made a play
+    (Status \= exit
+      ->  (
+            % if play is valid
+            (validatePlay(Board, Col, Row, NewCol, NewRow)
+              ->  (
+                    % update
+                    move(Board, Col, Row, NewCol, NewRow, NewBoard),
 
-  % repeat
-  gameloop(NewBoard).
+                    % render
+                    printBoard(NewBoard),
 
-% when gameloop fails (ie user pressed exit button)
-gameloop(_).
-
-
-/**
-* Decides how to act based on the exit status of startmenu/1
-*
-* @param +Status Exit status of startmenu/1
-*/
-
-% start the game
-startmenuHandler(good).
-
-% exit the program
-startmenuHandler(exit):- fail. % main fails > enters 2nd clause for main
+                    % repeat
+                    gameloop(NewBoard)
+                  )
+              ;   (
+                    write('\nPlay is invalid, please make a valid play...\n\n'),
+                    fail % go back to repeat
+                  )
+            )
+          )
+      ; true % finish gameloop
+    ),
+  !.
 
 
 /**
@@ -66,11 +54,13 @@ startmenuHandler(exit):- fail. % main fails > enters 2nd clause for main
 % main
 main:-
   startmenu(Status),
-  startmenuHandler(Status),
-  initial_board(Board),
-  printBoard(Board),
-  gameloop(Board),
-  main.
-
-% when main fails (ie user pressed exit button)
-main.
+  % if user started the game
+  (Status \= exit
+    ->  (
+          initial_board(Board),
+          printBoard(Board),
+          gameloop(Board),
+          main
+        )
+    ; true % close program
+  ).
