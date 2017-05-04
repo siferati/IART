@@ -1,24 +1,29 @@
 /**
 * This file implements all of Board predicates
+* such as printBoard/1 or validatePlay/5
 */
 
 :- ensure_loaded('utils.pl').
 
 
-% empty_board(-Board)
+/**
+* Returns the board state corresponding to the rule name
+*
+* @param -Board Game board (list of lists)
+*/
+
 empty_board([
   [emptyCell, emptyCell, emptyCell, atkarea, atkarea, atkarea, emptyCell, emptyCell, emptyCell],
   [emptyCell, emptyCell, emptyCell, emptyCell, atkarea, emptyCell, emptyCell, emptyCell, emptyCell],
-  [emptyCell, emptyCell, emptyCell, emptyCell, defarea, emptyCell, emptyCell, emptyCell, emptyCell],
-  [atkarea, emptyCell, emptyCell, emptyCell, defarea, emptyCell, emptyCell, emptyCell, atkarea],
-  [atkarea, atkarea, defarea, defarea, castle, defarea, defarea, atkarea, atkarea],
-  [atkarea, emptyCell, emptyCell, emptyCell, defarea, emptyCell, emptyCell, emptyCell, atkarea],
-  [emptyCell, emptyCell, emptyCell, emptyCell, defarea, emptyCell, emptyCell, emptyCell, emptyCell],
+  [emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell],
+  [atkarea, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, atkarea],
+  [atkarea, atkarea, emptyCell, emptyCell, castle, emptyCell, emptyCell, atkarea, atkarea],
+  [atkarea, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, atkarea],
+  [emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell],
   [emptyCell, emptyCell, emptyCell, emptyCell, atkarea, emptyCell, emptyCell, emptyCell, emptyCell],
   [emptyCell, emptyCell, emptyCell, atkarea, atkarea, atkarea, emptyCell, emptyCell, emptyCell]
 ]).
 
-% initial_board(-Board)
 initial_board([
   [emptyCell, emptyCell, emptyCell, attacker, attacker, attacker, emptyCell, emptyCell, emptyCell],
   [emptyCell, emptyCell, emptyCell, emptyCell, attacker, emptyCell, emptyCell, emptyCell, emptyCell],
@@ -32,13 +37,17 @@ initial_board([
 ]).
 
 
-% toChar(+Value, -Char)
+/**
+* Translates board symbols into chars, for easier printing
+*
+* @param +Value Symbol to translate
+* @param -Char Symbol's corresponding char
+*/
 toChar(emptyCell, ' ').
 toChar(king, 'K').
 toChar(defender, 'D').
 toChar(attacker, 'A').
 toChar(castle, 'C').
-toChar(defarea, 'O').
 toChar(atkarea, 'X').
 
 
@@ -83,7 +92,7 @@ getRowIds([' 1 ', ' 2 ', ' 3 ', ' 4 ', ' 5 ', ' 6 ', ' 7 ', ' 8 ', ' 9 ']).
 * Get list containing information to display to the user
 * (length MUST be the same as board rows!)
 */
-getInfo(['A - Attacker', 'D - Defender', 'K - King', 'O - Defenders Area', 'X - Attackers Area', 'C - Castle', '', '', '']).
+getInfo(['A - Attacker', 'C - Castle', 'D - Defender', 'K - King', 'X - Attackers\' Area', '', '', '', '']).
 
 
 /*
@@ -171,7 +180,49 @@ move(Board, OCol, ORow, NCol, NRow, NBoard):-
 
 
 /**
+* Each game rule is listed as a single prolog rule
+*
+* This implementation is negation based (Status = no),
+* meaning it checks if a play breaks a rule,
+* not if it follows it. Example:
+*
+* 0. Can only move attackers, defenders or the king
+* 1. Status = yes ← Piece = (attackers OR defenders OR king)
+* 2. Status = NOT(yes) ← Piece = NOT(attackers OR defenders OR king)
+* 3. Status = no ← Piece = (NOT(attackers) AND NOT(defenders) AND NOT(king))
+*
+* @param +Board Board
+* @param +OCol Original (current) column of piece to move
+* @param +ORow Original (current) row of piece to move
+* @param +NCol New column for selected piece
+* @param +NRow New row for selected piece
+* @param +Piece Piece to move
+* @param +NPiece New destination of piece
+* @param -Status Exit status. yes - play follows rule; no - play breaks rule
+*/
+
+% can only move attackers, defenders or the king
+gamerule(_, _, _, _, _, Piece, _, no):-
+  Piece \= attacker,
+  Piece \= defender,
+  Piece \= king.
+
+% a piece can only be placed in an empty cell or atk area
+gamerule(_, _, _, _, _, _, NPiece, no):-
+  NPiece \= emptyCell,
+  NPiece \= atkarea.
+
+% a piece can only move in a straight line
+gamerule(_, OCol, ORow, NCol, NRow, _, _, no):-
+  OCol \= NCol,
+  ORow \= NRow.
+
+
+/**
 * Checks if a play is valid
+*
+* This doesn't actually check if a play follows every rule,
+* it checks if it breaks any
 *
 * @param +Board Board
 * @param +OCol Original (current) column of piece to move
@@ -181,6 +232,6 @@ move(Board, OCol, ORow, NCol, NRow, NBoard):-
 */
 validatePlay(Board, OCol, ORow, NCol, NRow):-
   find(OCol, ORow, Board, Piece),
-  Piece \= emptyCell,
   find(NCol, NRow, Board, NPiece),
-  NPiece = emptyCell.
+  findall(Status, gamerule(Board, OCol, ORow, NCol, NRow, Piece, NPiece, Status), List),
+  \+member(no, List).

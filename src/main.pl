@@ -11,8 +11,6 @@
 *
 * @param +Board Current state of the game board
 */
-
-% main
 gameloop(Board):-
 
   % repeat until user inputs a valid play
@@ -27,8 +25,9 @@ gameloop(Board):-
             % if play is valid
             (validatePlay(Board, Col, Row, NewCol, NewRow)
               ->  (
-                    % update
                     move(Board, Col, Row, NewCol, NewRow, NewBoard),
+
+                    % TODO update comer as peças, verificar game over, etc
 
                     % render
                     printBoard(NewBoard),
@@ -37,7 +36,7 @@ gameloop(Board):-
                     gameloop(NewBoard)
                   )
               ;   (
-                    write('\nPlay is invalid, please make a valid play...\n\n'),
+                    dsp_invalidPlay,
                     fail % go back to repeat
                   )
             )
@@ -50,8 +49,6 @@ gameloop(Board):-
 /**
 * Main entry for the program
 */
-
-% main
 main:-
   startmenu(Status),
   % if user started the game

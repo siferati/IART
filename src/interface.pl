@@ -4,6 +4,33 @@
 */
 
 /**
+* Text to display to the user
+*
+* Put under prolog rules to avoid code replication
+* and for easier access and modification
+*/
+
+dsp_invalidInput:- write('\nInvalid input, please try again...\n').
+
+dsp_invalidPlay:- write('\nInvalid play, please try again...\n').
+
+dsp_goodbye:- write('\nExited program. Goodbye.\n\n').
+
+dsp_choosePiece:- write('\nChoose a piece to move. (e.g. A4)\nType \'e\' to return to the start menu.\n').
+
+dsp_placePiece:- write('\nWhere do you want to place the piece? (e.g. B4)\nType \'e\' to return to the start menu.\n').
+
+dsp_startmenu:-
+  nl,
+  write(' ******************** TABLUT ********************'), nl,
+  write(' *                                              *'), nl,
+  write(' *  Type \'e\' to exit, or press ENTER to start!  *'), nl,
+  write(' *                                              *'), nl,
+  write(' ************************************************'), nl,
+  nl.
+  
+
+/**
 * When 'e' is pressed, the game exits
 * 101 is the ASCII Code for 'e'
 */
@@ -93,7 +120,7 @@ readPosParserHandler(exit).
 
 % unexpected input
 readPosParserHandler(error):-
-  write('\nWrong input, please try again...\n'),
+  dsp_invalidInput,
   fail.
 
 
@@ -122,11 +149,11 @@ readPos(Col, Row, Status):-
 * @param -Status Exit status
 */
 askPos(Col, Row, NewCol, NewRow, Status):-
-  write('Choose a piece to move. (e.g. A1)\nType \'e\' to return to the start menu.\n'),
+  dsp_choosePiece,
   readPos(Col, Row, Status1),
   (Status1 = good
     -> (
-          write('\nWhere do you want to place the piece? (e.g. B2)\nType \'e\' to return to the start menu.\n'),
+          dsp_placePiece,
           readPos(NewCol, NewRow, Status)
         )
     ; Status = exit
@@ -163,12 +190,11 @@ startmenuParser(_, _, error):- !.
 startmenuParserHandler(good).
 
 % exit the program
-startmenuParserHandler(exit):-
-  write('\nExited program. Goodbye.\n\n').
+startmenuParserHandler(exit):- dsp_goodbye.
 
 % unexpected input
 startmenuParserHandler(error):-
-  write('\nWrong input, please try again...\n'),
+  dsp_invalidInput,
   fail.
 
 
@@ -178,13 +204,7 @@ startmenuParserHandler(error):-
 * @param +Status Exit status
 */
 startmenu(Status):-
-  nl,
-  write(' ******************** TABLUT ********************'), nl,
-  write(' *                                              *'), nl,
-  write(' *  Type \'e\' to exit, or press ENTER to start!  *'), nl,
-  write(' *                                              *'), nl,
-  write(' ************************************************'), nl,
-  nl,
+  dsp_startmenu,
   repeat,
     readLine(Line, Length),
     startmenuParser(Line, Length, Status),
