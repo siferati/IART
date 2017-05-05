@@ -16,9 +16,9 @@ dsp_invalidPlay:- write('\nInvalid play, please try again...\n').
 
 dsp_goodbye:- write('\nExited program. Goodbye.\n\n').
 
-dsp_choosePiece:- write('\nChoose a piece to move. (e.g. A4)\nType \'e\' to return to the start menu.\n').
+dsp_choosePiece:- write('\nChoose a piece to move. (e.g. a4)\nType \'e\' to return to the start menu.\n').
 
-dsp_placePiece:- write('\nWhere do you want to place the piece? (e.g. B4)\nType \'e\' to return to the start menu.\n').
+dsp_placePiece:- write('\nWhere do you want to place the piece? (e.g. b4)\nType \'e\' to return to the start menu.\n').
 
 dsp_startmenu:-
   nl,
@@ -28,12 +28,15 @@ dsp_startmenu:-
   write(' *                                              *'), nl,
   write(' ************************************************'), nl,
   nl.
-  
+
 
 /**
 * When 'e' is pressed, the game exits
+* 69 is the ASCII Code for 'E'
 * 101 is the ASCII Code for 'e'
+*
 */
+exitCode(69).
 exitCode(101).
 
 
@@ -44,7 +47,7 @@ exitCode(101).
 * @þaram +Code Code
 */
 int_code(Int, Code):-
-  Int is Code - 48. % input = code - '0'
+  Int is Code - "0".
 
 
 /**
@@ -89,8 +92,8 @@ readLine(L, N):-
 */
 
 % main
-readPosParser([ColCode , RowCode], 2, Col, Row, good):-
-  Col is ColCode - 65, % col = code - 'A'
+readPosParser([ColCode, RowCode], 2, Col, Row, good):-
+  (Col is ColCode - "A" | Col is ColCode - "a"),
   Col >= 0, Col =< 8,
   int_code(TempRow, RowCode),
   Row is TempRow - 1,
