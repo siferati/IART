@@ -180,6 +180,65 @@ move(Board, OCol, ORow, NCol, NRow, NBoard):-
 
 
 /**
+* Auxiliary rule to clearPath/5
+* Checks in what direction the movement is,
+* and calculates the iteration step accordingly
+*
+* @param +ICol Current column being iterated
+* @param +IRow Current row being iterated
+* @param +FCol Final column
+* @param +FRow Final row
+* @param -NextCol Next column to iterate
+* @param -NextRow Next row to iterate
+*/
+
+% left > right
+clearPathIterationStep(ICol, FRow, FCol, FRow, NextCol, FRow):-
+  ICol < FCol,
+  NextCol is ICol + 1.
+
+% right > left
+clearPathIterationStep(ICol, FRow, FCol, FRow, NextCol, FRow):-
+  ICol > FCol,
+  NextCol is ICol - 1.
+
+% top > bottom
+clearPathIterationStep(FCol, IRow, FCol, FRow, FCol, NextRow):-
+  IRow < FRow,
+  NextRow is IRow + 1.
+
+% bottom > top
+clearPathIterationStep(FCol, IRow, FCol, FRow, FCol, NextRow):-
+  IRow > FRow,
+  NextRow is IRow - 1.
+
+
+/**
+* Checks if there's nothing blocking the path
+* between two board positions
+*
+* @param +Board Board
+* @param +ICol Current column being iterated
+* @param +IRow Current row being iterated
+* @param +FCol Final column
+* @param +FRow Final row
+*/
+
+% stop condition
+clearPath(_, FCol, FRow, FCol, FRow):- !.
+
+% main
+clearPath(Board, ICol, IRow, FCol, FRow):-
+  find(ICol, IRow, Board, IPiece),
+  IPiece \= attacker,
+  IPiece \= defender,
+  IPiece \= king,
+  clearPathIterationStep(ICol, IRow, FCol, FRow, NextCol, NextRow),
+  clearPath(Board, NextCol, NextRow, FCol, FRow),
+  !.
+
+
+/**
 * Each game rule is listed as a single prolog rule
 *
 * This implementation is negation based (Status = no),
@@ -201,7 +260,7 @@ move(Board, OCol, ORow, NCol, NRow, NBoard):-
 * @param -Status Exit status. yes - play follows rule; no - play breaks rule
 */
 
-% can only move attackers, defenders or the king
+% can only move attackers, defenders or the king TODO split this in two, one for each player
 gamerule(_, _, _, _, _, Piece, _, no):-
   Piece \= attacker,
   Piece \= defender,
@@ -216,6 +275,12 @@ gamerule(_, _, _, _, _, _, NPiece, no):-
 gamerule(_, OCol, ORow, NCol, NRow, _, _, no):-
   OCol \= NCol,
   ORow \= NRow.
+
+% a piece can't pass through other pieces
+gamerule(Board, OCol, ORow, NCol, NRow, _, _, no):-
+  % skip first iteration (original position)
+  clearPathIterationStep(OCol, ORow, NCol, NRow, ICol, IRow),
+  \+clearPath(Board, ICol, IRow, NCol, NRow).
 
 
 /**
