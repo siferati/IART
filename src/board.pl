@@ -215,7 +215,10 @@ clearPathIterationStep(FCol, IRow, FCol, FRow, FCol, NextRow):-
 
 /**
 * Checks if there's nothing blocking the path
-* between two board positions
+* between two board positions.
+*
+* Requires clearPathIterationStep/6 to be called beforehand,
+* in order to skip the first iteration (the original position)
 *
 * @param +Board Board
 * @param +ICol Current column being iterated
@@ -225,17 +228,32 @@ clearPathIterationStep(FCol, IRow, FCol, FRow, FCol, NextRow):-
 */
 
 % stop condition
-clearPath(_, FCol, FRow, FCol, FRow):- !.
+clearPathIteration(_, FCol, FRow, FCol, FRow):- !.
 
 % main
-clearPath(Board, ICol, IRow, FCol, FRow):-
+clearPathIteration(Board, ICol, IRow, FCol, FRow):-
   find(ICol, IRow, Board, IPiece),
   IPiece \= attacker,
   IPiece \= defender,
   IPiece \= king,
   clearPathIterationStep(ICol, IRow, FCol, FRow, NextCol, NextRow),
-  clearPath(Board, NextCol, NextRow, FCol, FRow),
+  clearPathIteration(Board, NextCol, NextRow, FCol, FRow),
   !.
+
+
+/**
+* Interface for clearPathIteration/5, since it requires
+* clearPathIterationStep/6 to be called beforehand
+*
+* @param +Board Board
+* @param +OCol Current column being iterated
+* @param +ORow Current row being iterated
+* @param +NCol Final column
+* @param +NRow Final row
+*/
+clearPath(Board, OCol, ORow, NCol, NRow):-
+  clearPathIterationStep(OCol, ORow, NCol, NRow, ICol, IRow),
+  clearPathIteration(Board, ICol, IRow, NCol, NRow).
 
 
 /**
@@ -278,9 +296,7 @@ gamerule(_, OCol, ORow, NCol, NRow, _, _, no):-
 
 % a piece can't pass through other pieces
 gamerule(Board, OCol, ORow, NCol, NRow, _, _, no):-
-  % skip first iteration (original position)
-  clearPathIterationStep(OCol, ORow, NCol, NRow, ICol, IRow),
-  \+clearPath(Board, ICol, IRow, NCol, NRow).
+  \+clearPath(Board, OCol, ORow, NCol, NRow).
 
 
 /**
