@@ -1,9 +1,10 @@
 /**
 * This file implements all of Board predicates
-* such as printBoard/1 or validatePlay/5
+* such as printBoard/1 or validatePlay/6
 */
 
 :- ensure_loaded('utils.pl').
+:- ensure_loaded('player.pl').
 
 
 /**
@@ -269,6 +270,7 @@ clearPath(Board, OCol, ORow, NCol, NRow):-
 * 3. Status = no ← Piece = (NOT(attackers) AND NOT(defenders) AND NOT(king))
 *
 * @param +Board Board
+* @param +Player Current player's turn
 * @param +OCol Original (current) column of piece to move
 * @param +ORow Original (current) row of piece to move
 * @param +NCol New column for selected piece
@@ -278,25 +280,23 @@ clearPath(Board, OCol, ORow, NCol, NRow):-
 * @param -Status Exit status. yes - play follows rule; no - play breaks rule
 */
 
-% can only move attackers, defenders or the king TODO split this in two, one for each player
-gamerule(_, _, _, _, _, Piece, _, no):-
-  Piece \= attacker,
-  Piece \= defender,
-  Piece \= king.
+% a player can only move his own pieces (attackers, defenders or king)
+gamerule(_, Player, _, _, _, _, Piece, _, no):-
+  \+ ownPiece(Player, Piece).
 
 % a piece can only be placed in an empty cell or atk area
-gamerule(_, _, _, _, _, _, NPiece, no):-
+gamerule(_, _, _, _, _, _, _, NPiece, no):-
   NPiece \= emptyCell,
   NPiece \= atkarea.
 
 % a piece can only move in a straight line
-gamerule(_, OCol, ORow, NCol, NRow, _, _, no):-
+gamerule(_, _, OCol, ORow, NCol, NRow, _, _, no):-
   OCol \= NCol,
   ORow \= NRow.
 
 % a piece can't pass through other pieces
-gamerule(Board, OCol, ORow, NCol, NRow, _, _, no):-
-  \+clearPath(Board, OCol, ORow, NCol, NRow).
+gamerule(Board, _, OCol, ORow, NCol, NRow, _, _, no):-
+  \+ clearPath(Board, OCol, ORow, NCol, NRow).
 
 
 /**
@@ -306,13 +306,14 @@ gamerule(Board, OCol, ORow, NCol, NRow, _, _, no):-
 * it checks if it breaks any
 *
 * @param +Board Board
+* @param +Player Current player's turn
 * @param +OCol Original (current) column of piece to move
 * @param +ORow Original (current) row of piece to move
 * @param +NCol New column for selected piece
 * @param +NRow New row for selected piece
 */
-validatePlay(Board, OCol, ORow, NCol, NRow):-
+validatePlay(Board, Player, OCol, ORow, NCol, NRow):-
   find(OCol, ORow, Board, Piece),
   find(NCol, NRow, Board, NPiece),
-  findall(Status, gamerule(Board, OCol, ORow, NCol, NRow, Piece, NPiece, Status), List),
+  findall(Status, gamerule(Board, Player, OCol, ORow, NCol, NRow, Piece, NPiece, Status), List),
   \+member(no, List).

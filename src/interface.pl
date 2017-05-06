@@ -3,6 +3,9 @@
 * and the necessary I/O operations
 */
 
+:- ensure_loaded('player.pl').
+
+
 /**
 * Text to display to the user
 *
@@ -16,7 +19,11 @@ dsp_invalidPlay:- write('\nInvalid play, please try again...\n').
 
 dsp_goodbye:- write('\nExited program. Goodbye.\n\n').
 
-dsp_choosePiece:- write('\nChoose a piece to move. (e.g. a4)\nType \'e\' to return to the start menu.\n').
+% @param +Player Current player's turn
+dsp_choosePiece(Player):-
+  toString(Player, Name),
+  write('\nPlayer\'s turn: '), write(Name), nl,
+  write('\nChoose a piece to move. (e.g. a4)\nType \'e\' to return to the start menu.\n').
 
 dsp_placePiece:- write('\nWhere do you want to place the piece? (e.g. b4)\nType \'e\' to return to the start menu.\n').
 
@@ -145,14 +152,15 @@ readPos(Col, Row, Status):-
 /**
 * Asks the user to move a piece
 *
+* @param +Player Current player's turn
 * @param -Col Selected piece's column
 * @param -Row Selected piece's row
 * @param -NewCol Destination column of selected piece
 * @param -NewRow Destination row of selected piece
 * @param -Status Exit status
 */
-askPos(Col, Row, NewCol, NewRow, Status):-
-  dsp_choosePiece,
+askPos(Player, Col, Row, NewCol, NewRow, Status):-
+  dsp_choosePiece(Player),
   readPos(Col, Row, Status1),
   (Status1 = good
     -> (
