@@ -1,4 +1,4 @@
-/**
+/** TODO remove magic numbers from all src files, such as board width and height
 * This file implements the core functions of the program, such as the game loop
 */
 
@@ -29,14 +29,17 @@ gameloop(Board, Player):-
               ->  (
                     move(Board, Col, Row, NewCol, NewRow, NewBoard),
 
-                    % TODO update comer as peças, verificar game over, etc
+                    % update
+                    update(NewBoard, NewNewBoard),
+
+                    % TODO check gameover and printf accordingly
 
                     % render
-                    printBoard(NewBoard),
+                    printBoard(NewNewBoard),
 
                     % repeat
                     switchPlayer(Player, NextPlayer),
-                    gameloop(NewBoard, NextPlayer)
+                    gameloop(NewNewBoard, NextPlayer)
                   )
               ;   (
                     dsp_invalidPlay,

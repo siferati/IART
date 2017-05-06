@@ -53,6 +53,19 @@ toChar(atkarea, 'X').
 
 
 /**
+* Checks if two pieces are enemies
+*
+* @param +PieceA First piece
+* @param +PieceB Second piece
+*/
+enemy(attacker, defender).
+enemy(attacker, king).
+enemy(defender, attacker).
+enemy(king, attacker).
+enemy(king, castle). % surprisingly, the castle can help capture the king
+
+
+/**
 * Prints horizontal board separators
 *
 * @param +Type Separator to print
@@ -151,7 +164,7 @@ printBoard(Board):-
 
 /**
 * Removes a piece from the board
-* And replace it with corresponding area
+* And replaces it with corresponding area
 *
 * @param +Board Board
 * @param +Col Column of piece to remove
@@ -299,7 +312,7 @@ gamerule(Board, _, OCol, ORow, NCol, NRow, _, _, no):-
   \+ clearPath(Board, OCol, ORow, NCol, NRow).
 
 
-/**
+/** TODO try using if/3 instead of status + findall
 * Checks if a play is valid
 *
 * This doesn't actually check if a play follows every rule,
@@ -317,3 +330,96 @@ validatePlay(Board, Player, OCol, ORow, NCol, NRow):-
   find(NCol, NRow, Board, NPiece),
   findall(Status, gamerule(Board, Player, OCol, ORow, NCol, NRow, Piece, NPiece, Status), List),
   \+member(no, List).
+
+
+/**
+* Checks if a piece is captured
+*
+* @param +Board Game board
+* @param +Piece Piece to analyze
+* @param +Col Piece's column
+* @param +Row Piece's row
+*/
+
+% TODO king
+captured(_, king, _, _):- !, fail.
+
+% defender and attackers
+captured(Board, Piece, Col, Row):-
+  % horizontal
+  (
+    LCol is Col - 1,
+    % don't call find/4 if LCol is out of bounds
+    (
+      LCol < 0
+    |
+      find(LCol, Row, Board, LPiece),
+      enemy(Piece, LPiece)
+    ),
+    RCol is Col + 1,
+    % don't call find/4 if RCol is out of bounds
+    (
+      RCol > 8
+    |
+      find(RCol, Row, Board, RPiece),
+      enemy(Piece, RPiece)
+    )
+  % vertical
+  |
+    TRow is Row - 1,
+    % don't call find/4 if TRow is out of bounds
+    (
+      TRow < 0
+    |
+      find(Col, TRow, Board, TPiece),
+      enemy(Piece, TPiece)
+    ),
+    DRow is Row + 1,
+    % don't call find/4 if DRow is out of bounds
+    (
+      DRow > 8
+    |
+      find(Col, DRow, Board, DPiece),
+      enemy(Piece, DPiece)
+    )
+  ).
+
+
+/**
+* Iterates through Board and removes every captured piece
+*
+* @param +Board Game board
+* @param -NewBoard Board with all captured pieces removed
+* @param +Col Column of piece being iterated
+* @param +Row Row of piece being iterated
+*/
+
+% stop condition
+removeCaptured(Board, 0, 9, Board).
+
+% next row
+removeCaptured(Board, 9, Row, NewBoard):-
+  NextRow is Row + 1,
+  removeCaptured(Board, 0, NextRow, NewBoard).
+
+% main
+removeCaptured(Board, Col, Row, NewBoard):-
+  find(Col, Row, Board, Piece),
+  (
+    captured(Board, Piece, Col, Row),
+    remove(Board, Col, Row, NBoard)
+  |
+    NBoard = Board
+  ),
+  NextCol is Col + 1,
+  removeCaptured(NBoard, NextCol, Row, NewBoard).
+
+
+/**
+* Updates the board, removing captured pieces
+*
+* @param +Board Current board
+* @param -NewBoard Updated board
+*/
+update(Board, NewBoard):-
+  removeCaptured(Board, 0, 0, NewBoard).
