@@ -40,19 +40,6 @@ initial_board([
 ]).
 
 
-test_board([
-  [emptyCell, emptyCell, emptyCell, atkarea, atkarea, atkarea, emptyCell, emptyCell, emptyCell],
-  [attacker, emptyCell, emptyCell, defender, atkarea, emptyCell, emptyCell, emptyCell, emptyCell],
-  [defender, attacker, defender, attacker, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell],
-  [attacker, emptyCell, emptyCell, defender, emptyCell, emptyCell, emptyCell, emptyCell, atkarea],
-  [atkarea, atkarea, emptyCell, emptyCell, castle, emptyCell, emptyCell, atkarea, atkarea],
-  [atkarea, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, atkarea],
-  [emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell],
-  [emptyCell, emptyCell, emptyCell, emptyCell, atkarea, emptyCell, emptyCell, emptyCell, emptyCell],
-  [emptyCell, emptyCell, emptyCell, atkarea, atkarea, atkarea, emptyCell, emptyCell, emptyCell]
-]).
-
-
 /**
 * Translates board symbols into chars, for easier printing
 *
@@ -250,6 +237,7 @@ clearPathIterationStep(FCol, IRow, FCol, FRow, FCol, NextRow):-
 * in order to skip the first iteration (the original position)
 *
 * @param +Board Board
+* @param +OPiece Initial position
 * @param +ICol Current column being iterated
 * @param +IRow Current row being iterated
 * @param +FCol Final column
@@ -257,16 +245,28 @@ clearPathIterationStep(FCol, IRow, FCol, FRow, FCol, NextRow):-
 */
 
 % stop condition
-clearPathIteration(_, FCol, FRow, FCol, FRow):- !.
+clearPathIteration(Board, OPiece, FCol, FRow, FCol, FRow):- !,
+  find(FCol, FRow, Board, FPiece),
+  FPiece \= attacker,
+  FPiece \= defender,
+  (OPiece = king ->
+    FPiece \= atkarea
+  ;
+    FPiece \= king
+  ).
 
 % main
-clearPathIteration(Board, ICol, IRow, FCol, FRow):-
+clearPathIteration(Board, OPiece, ICol, IRow, FCol, FRow):-
   find(ICol, IRow, Board, IPiece),
   IPiece \= attacker,
   IPiece \= defender,
-  IPiece \= king,
+  (OPiece = king ->
+    IPiece \= atkarea
+  ;
+    IPiece \= king
+  ),
   clearPathIterationStep(ICol, IRow, FCol, FRow, NextCol, NextRow),
-  clearPathIteration(Board, NextCol, NextRow, FCol, FRow),
+  clearPathIteration(Board, OPiece, NextCol, NextRow, FCol, FRow),
   !.
 
 
@@ -282,7 +282,8 @@ clearPathIteration(Board, ICol, IRow, FCol, FRow):-
 */
 clearPath(Board, OCol, ORow, NCol, NRow):-
   clearPathIterationStep(OCol, ORow, NCol, NRow, ICol, IRow),
-  clearPathIteration(Board, ICol, IRow, NCol, NRow).
+  find(OCol, ORow, Board, OPiece),
+  clearPathIteration(Board, OPiece, ICol, IRow, NCol, NRow).
 
 
 /**
@@ -356,10 +357,29 @@ validatePlay(Board, Player, OCol, ORow, NCol, NRow):-
 * @param +Row Piece's row
 */
 
-% TODO king
-captured(_, king, _, _):- !, fail.
+% king
+captured(Board, king, Col, Row):- !,
+  LCol is Col - 1,
+  RCol is Col + 1,
+  TRow is Row - 1,
+  DRow is Row + 1,
+  % don't call find/4 if either LCol, RCol, TRow or DRow is out of bounds
+  ( \+ (LCol < 0 | RCol > 8 | TRow < 0 | DRow > 8) ->
+    % right
+    find(LCol, Row, Board, LPiece),
+    enemy(Piece, LPiece),
+    % left
+    find(RCol, Row, Board, RPiece),
+    enemy(Piece, RPiece),
+    % top
+    find(Col, TRow, Board, TPiece),
+    enemy(Piece, TPiece),
+    % down
+    find(Col, DRow, Board, DPiece),
+    enemy(Piece, DPiece)
+  ).
 
-% defender and attackers
+% defenders and attackers
 captured(Board, Piece, Col, Row):-
   % horizontal
   (
@@ -411,7 +431,7 @@ getCaptured(Board, Col, Row, [Append | Captured]):-
   find(Col, Row, Board, Piece),
   (
     captured(Board, Piece, Col, Row),
-    Append = Col-Row %  diff from Append is Col - Row
+    Append = Piece-Col-Row %  diff from Append is Col - Row
   |
     % delete/3 should be called to remove all of these elements
     Append = delete
@@ -443,9 +463,86 @@ getCaptured(Board, Captured):-
 removeCaptured(Board, [], Board).
 
 % main
-removeCaptured(Board, [Col-Row | T], NewBoard):-
-  remove(Board, Col, Row, NBoard),
+removeCaptured(Board, [Piece-Col-Row | T], NewBoard):-
+  ( % king can never be removed, even when captured
+    Piece = king
+  |
+    remove(Board, Col, Row, NBoard)
+  ),
   removeCaptured(NBoard, T, NewBoard).
+
+
+/**
+* Checks the current game state
+*
+* Possible states:
+*   normal - nothing special to note
+*   check - the king has one path of escape
+*   checkmate - the king has two or more paths of escape
+*   captured - the king was captured
+*
+* @param +Board Current board
+* @param +PrevState Previous game state
+* @param -State Current state of the game
+*/
+
+% check
+gamestate(Board, check, State):-
+  gamestate(Board, normal, TempState),
+  ( % if check two turns in a row, turns into checkmate and player wins
+    TempState = check,
+    State = checkmate
+  |
+    State = TempState
+  ).
+
+% normal
+gamestate(Board, normal, State):-
+
+  findPos(Col, Row, Board, king),
+
+  ( % check if king was captured
+    captured(Board, king, Col, Row),
+    State = captured
+
+  | % check if the king has any escapes
+
+    ( % right
+      clearPath(Board, Col, Row, 8, Row),
+      Right = 1
+    |
+      Right = 0
+    ),
+    ( % left
+      clearPath(Board, Col, Row, 0, Row),
+      Left = 1
+    |
+      Left = 0
+    ),
+    ( % top
+      clearPath(Board, Col, Row, Col, 0),
+      Top = 1
+    |
+      Top = 0
+    ),
+    ( % down
+      clearPath(Board, Col, Row, Col, 8),
+      Down = 1
+    |
+      Down = 0
+    ),
+    Escapes is Right + Left + Top + Down,
+    (
+      Escapes = 0,
+      State = normal
+    |
+      Escapes = 1,
+      State = check
+    |
+      Escapes > 1,
+      State = checkmate
+    )
+  ).
 
 
 /**
@@ -453,7 +550,10 @@ removeCaptured(Board, [Col-Row | T], NewBoard):-
 *
 * @param +Board Current board
 * @param -NewBoard Updated board
+* @param +CurrentState Current gamestate
+* @param -UpdatedState State of updated game
 */
-update(Board, NewBoard):-
+update(Board, NewBoard, CurrentState, UpdatedState):-
   getCaptured(Board, Captured),
-  removeCaptured(Board, Captured, NewBoard).
+  removeCaptured(Board, Captured, NewBoard),
+  gamestate(Board, CurrentState, UpdatedState).

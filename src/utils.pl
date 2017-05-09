@@ -48,3 +48,26 @@ replace(X, [H|T], Elem, [H|R]):- X > 0, NewX is X - 1, replace(NewX, T, Elem, R)
 */
 replace(X, 0, [H|T], Elem, [NewH|T]):- replace(X, H, Elem, NewH).
 replace(X, Y, [H|T], Elem, [H|R]):- Y > 0, NewY is Y - 1, replace(X, NewY, T, Elem, R).
+
+
+/**
+* Returns the position of an element in a list
+*
+* @param -X Index of element
+* @param +List List that has the element to be found
+* @param +Elem Element to find
+*/
+findPos(0, [H|_], H).
+findPos(X, [_|T], Elem):- findPos(Aux, T, Elem), X is Aux + 1.
+
+
+/**
+* Returns the position of an element in a list of lists (2D array)
+*
+* @param -X Index of element
+* @param -Y Index of element
+* @param +List List that has the element to be found
+* @param +Elem Element to find
+*/
+findPos(X, 0, [H|_], Elem):- findPos(X, H, Elem).
+findPos(X, Y, [_|T], Elem):- findPos(X, Aux, T, Elem), Y is Aux + 1.

@@ -1,5 +1,10 @@
-/** TODO remove magic numbers from all src files, such as board width and height
+/**
 * This file implements the core functions of the program, such as the game loop
+*/
+
+/*
+TODO remove magic numbers from all src files, such as board width and height
+TODO review and remove unecessary cuts
 */
 
 :- ensure_loaded('board.pl').
@@ -12,14 +17,22 @@
 *
 * @param +Board Current state of the game board
 * @param +Player Current player's turn
+* @param +Gamestate Current state of the game
 */
-gameloop(Board, Player):-
+gameloop(Board, Player, Gamestate):-
 
   % repeat until user inputs a valid play
   repeat,
 
-    % process input
-    askPos(Player, Col, Row, NewCol, NewRow, Status),
+    % TODO interface gamestate message (interface waits enter press and status = exit)
+    write('\nGame state: '), write(Gamestate), nl,
+
+    (Gamestate \= checkmate ->
+      % process input
+      askPos(Player, Col, Row, NewCol, NewRow, Status)
+    ;
+      Status = exit
+    ),
 
     % if user made a play
     (Status \= exit
@@ -30,16 +43,14 @@ gameloop(Board, Player):-
                     move(Board, Col, Row, NewCol, NewRow, NewBoard),
 
                     % update
-                    update(NewBoard, NewNewBoard),
-
-                    % TODO check gameover and printf accordingly
+                    update(NewBoard, NewNewBoard, Gamestate, NewGamestate),
 
                     % render
                     printBoard(NewNewBoard),
 
                     % repeat
                     switchPlayer(Player, NextPlayer),
-                    gameloop(NewNewBoard, NextPlayer)
+                    gameloop(NewNewBoard, NextPlayer, NewGamestate)
                   )
               ;   (
                     dsp_invalidPlay,
@@ -63,15 +74,8 @@ main:-
           initial_board(Board),
           firstPlayer(Player),
           printBoard(Board),
-          gameloop(Board, Player),
+          gameloop(Board, Player, normal),
           main
         )
     ; true % close program
   ).
-
-
-test:-
-  test_board(Board),
-  printBoard(Board),
-  update(Board, NewBoard),
-  printBoard(NewBoard).
