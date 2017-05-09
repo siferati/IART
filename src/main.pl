@@ -68,3 +68,10 @@ main:-
         )
     ; true % close program
   ).
+
+
+test:-
+  test_board(Board),
+  printBoard(Board),
+  update(Board, NewBoard),
+  printBoard(NewBoard).

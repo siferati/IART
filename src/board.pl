@@ -3,6 +3,8 @@
 * such as printBoard/1 or validatePlay/6
 */
 
+:- use_module(library(lists)).
+
 :- ensure_loaded('utils.pl').
 :- ensure_loaded('player.pl').
 
@@ -35,6 +37,19 @@ initial_board([
   [emptyCell, emptyCell, emptyCell, emptyCell, defender, emptyCell, emptyCell, emptyCell, emptyCell],
   [emptyCell, emptyCell, emptyCell, emptyCell, attacker, emptyCell, emptyCell, emptyCell, emptyCell],
   [emptyCell, emptyCell, emptyCell, attacker, attacker, attacker, emptyCell, emptyCell, emptyCell]
+]).
+
+
+test_board([
+  [emptyCell, emptyCell, emptyCell, atkarea, atkarea, atkarea, emptyCell, emptyCell, emptyCell],
+  [attacker, emptyCell, emptyCell, defender, atkarea, emptyCell, emptyCell, emptyCell, emptyCell],
+  [defender, attacker, defender, attacker, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell],
+  [attacker, emptyCell, emptyCell, defender, emptyCell, emptyCell, emptyCell, emptyCell, atkarea],
+  [atkarea, atkarea, emptyCell, emptyCell, castle, emptyCell, emptyCell, atkarea, atkarea],
+  [atkarea, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, atkarea],
+  [emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell, emptyCell],
+  [emptyCell, emptyCell, emptyCell, emptyCell, atkarea, emptyCell, emptyCell, emptyCell, emptyCell],
+  [emptyCell, emptyCell, emptyCell, atkarea, atkarea, atkarea, emptyCell, emptyCell, emptyCell]
 ]).
 
 
@@ -349,36 +364,22 @@ captured(Board, Piece, Col, Row):-
   % horizontal
   (
     LCol is Col - 1,
-    % don't call find/4 if LCol is out of bounds
-    (
-      LCol < 0
-    |
-      find(LCol, Row, Board, LPiece),
-      enemy(Piece, LPiece)
-    ),
     RCol is Col + 1,
-    % don't call find/4 if RCol is out of bounds
-    (
-      RCol > 8
-    |
+    % don't call find/4 if either LCol or RCol is out of bounds
+    ( \+ (LCol < 0 | RCol > 8) ->
+      find(LCol, Row, Board, LPiece),
+      enemy(Piece, LPiece),
       find(RCol, Row, Board, RPiece),
       enemy(Piece, RPiece)
     )
   % vertical
   |
     TRow is Row - 1,
-    % don't call find/4 if TRow is out of bounds
-    (
-      TRow < 0
-    |
-      find(Col, TRow, Board, TPiece),
-      enemy(Piece, TPiece)
-    ),
     DRow is Row + 1,
-    % don't call find/4 if DRow is out of bounds
-    (
-      DRow > 8
-    |
+    % don't call find/4 if either TRow or DRow is out of bounds
+    ( \+ (TRow < 0 | DRow > 8) ->
+      find(Col, TRow, Board, TPiece),
+      enemy(Piece, TPiece),
       find(Col, DRow, Board, DPiece),
       enemy(Piece, DPiece)
     )
@@ -386,33 +387,65 @@ captured(Board, Piece, Col, Row):-
 
 
 /**
-* Iterates through Board and removes every captured piece
+* Iterates through Board and finds every captured piece
+*
+* delete/3 MUST be called after this rule, to remove
+* all delete elements from the returned list
 *
 * @param +Board Game board
-* @param -NewBoard Board with all captured pieces removed
 * @param +Col Column of piece being iterated
 * @param +Row Row of piece being iterated
+* @param -Captured List of all the captured pieces
 */
 
 % stop condition
-removeCaptured(Board, 0, 9, Board).
+getCaptured(_, 0, 9, []).
 
 % next row
-removeCaptured(Board, 9, Row, NewBoard):-
+getCaptured(Board, 9, Row, Captured):-
   NextRow is Row + 1,
-  removeCaptured(Board, 0, NextRow, NewBoard).
+  getCaptured(Board, 0, NextRow, Captured).
 
 % main
-removeCaptured(Board, Col, Row, NewBoard):-
+getCaptured(Board, Col, Row, [Append | Captured]):-
   find(Col, Row, Board, Piece),
   (
     captured(Board, Piece, Col, Row),
-    remove(Board, Col, Row, NBoard)
+    Append = Col-Row %  diff from Append is Col - Row
   |
-    NBoard = Board
+    % delete/3 should be called to remove all of these elements
+    Append = delete
   ),
   NextCol is Col + 1,
-  removeCaptured(NBoard, NextCol, Row, NewBoard).
+  getCaptured(Board, NextCol, Row, Captured).
+
+
+/**
+* Interface for getCaptured/4
+*
+* @param +Board Game board
+* @param -Captured List of all the captured pieces
+*/
+getCaptured(Board, Captured):-
+  getCaptured(Board, 0, 0, Temp),
+  delete(Temp, delete, Captured).
+
+
+/**
+* Removes every captured piece from Board
+*
+* @param +Board Game board
+* @param +Captured List of all the captured pieces
+* @param -NewBoard Board with all captured pieces removed
+*/
+
+% stop condition
+removeCaptured(Board, [], Board).
+
+% main
+removeCaptured(Board, [Col-Row | T], NewBoard):-
+  remove(Board, Col, Row, NBoard),
+  removeCaptured(NBoard, T, NewBoard).
 
 
 /**
@@ -422,4 +455,5 @@ removeCaptured(Board, Col, Row, NewBoard):-
 * @param -NewBoard Updated board
 */
 update(Board, NewBoard):-
-  removeCaptured(Board, 0, 0, NewBoard).
+  getCaptured(Board, Captured),
+  removeCaptured(Board, Captured, NewBoard).
