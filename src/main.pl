@@ -24,13 +24,12 @@ gameloop(Board, Player, Gamestate):-
   % repeat until user inputs a valid play
   repeat,
 
-    % TODO interface gamestate message (interface waits enter press and status = exit)
-    write('\nGame state: '), write(Gamestate), nl,
-
-    (Gamestate \= checkmate ->
+    (\+gameover(Gamestate) ->
       % process input
       askPos(Player, Col, Row, NewCol, NewRow, Status)
     ;
+      switchPlayer(Player, Winner),
+      gameovermenu(Winner),
       Status = exit
     ),
 
@@ -43,10 +42,19 @@ gameloop(Board, Player, Gamestate):-
                     move(Board, Col, Row, NewCol, NewRow, NewBoard),
 
                     % update
-                    update(NewBoard, NewNewBoard, Gamestate, NewGamestate),
+                    update(NewBoard, Player, NewNewBoard, NewGamestate),
 
                     % render
-                    printBoard(NewNewBoard),
+                    (NewGamestate = captured ->
+                      % print NOT updated board, in case important pieces were captured
+                      printBoard(NewBoard)
+                    ;
+                      printBoard(NewNewBoard),
+                      (NewGamestate = check ->
+                        dsp_check
+                      ; true
+                      )
+                    ),
 
                     % repeat
                     switchPlayer(Player, NextPlayer),

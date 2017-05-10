@@ -465,7 +465,8 @@ removeCaptured(Board, [], Board).
 % main
 removeCaptured(Board, [Piece-Col-Row | T], NewBoard):-
   ( % king can never be removed, even when captured
-    Piece = king
+    Piece = king,
+    NBoard = Board
   |
     remove(Board, Col, Row, NBoard)
   ),
@@ -482,28 +483,29 @@ removeCaptured(Board, [Piece-Col-Row | T], NewBoard):-
 *   captured - the king was captured
 *
 * @param +Board Current board
-* @param +PrevState Previous game state
 * @param -State Current state of the game
 */
 
-% check
-gamestate(Board, check, State):-
-  gamestate(Board, normal, TempState),
-  ( % if check two turns in a row, turns into checkmate and player wins
-    TempState = check,
-    State = checkmate
-  |
-    State = TempState
-  ).
-
 % normal
-gamestate(Board, normal, State):-
+gamestate(Board, State):-
 
   findPos(Col, Row, Board, king),
 
   ( % check if king was captured
     captured(Board, king, Col, Row),
     State = captured
+
+  | % check if the king has escaped
+    (
+      Col = 0
+    |
+      Col = 8
+    |
+      Row = 0
+    |
+      Row = 8
+    ),
+    State = checkmate
 
   | % check if the king has any escapes
 
@@ -549,11 +551,27 @@ gamestate(Board, normal, State):-
 * Updates the board, removing captured pieces
 *
 * @param +Board Current board
+* @param +Player Current player's turn
 * @param -NewBoard Updated board
-* @param +CurrentState Current gamestate
 * @param -UpdatedState State of updated game
 */
-update(Board, NewBoard, CurrentState, UpdatedState):-
+update(Board, Player, NewBoard, UpdatedState):-
   getCaptured(Board, Captured),
   removeCaptured(Board, Captured, NewBoard),
-  gamestate(Board, CurrentState, UpdatedState).
+  % this makes sure that gameover is correctly detected the instant it happens
+  (
+    Player = atkplayer,
+    gamestate(Board, UpdatedState)
+  |
+    Player = defplayer,
+    gamestate(NewBoard, UpdatedState)
+  ).
+
+
+/**
+* Checks if game is over
+*
+* @param +State Current state of the game
+*/
+gameover(captured).
+gameover(checkmate).

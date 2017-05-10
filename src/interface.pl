@@ -17,6 +17,8 @@ dsp_invalidInput:- write('\nInvalid input, please try again...\n').
 
 dsp_invalidPlay:- write('\nInvalid play, please try again...\n').
 
+dsp_pressEnter:- write('\nPress ENTER to continue...\n').
+
 dsp_goodbye:- write('\nExited program. Goodbye.\n\n').
 
 % @param +Player Current player's turn
@@ -27,6 +29,8 @@ dsp_choosePiece(Player):-
 
 dsp_placePiece:- write('\nWhere do you want to place the piece? (e.g. b4)\nType \'e\' to return to the start menu.\n').
 
+dsp_check:- write('\nCHECK: The king has one path of escape!\n').
+
 dsp_startmenu:-
   nl,
   write(' ******************** TABLUT ********************'), nl,
@@ -35,6 +39,18 @@ dsp_startmenu:-
   write(' *                                              *'), nl,
   write(' ************************************************'), nl,
   nl.
+
+% @param +Winner Player that won the game
+dsp_gameover(Winner):-
+  toString(Winner, Name),
+  nl,
+  write(' ******************* GAMEOVER *******************'), nl,
+  write(' *                                              *'), nl,
+  write(' *             '), write(Name), write(' won             *'), nl,
+  write(' *                                              *'), nl,
+  write(' ************************************************'), nl,
+  nl,
+  dsp_pressEnter.
 
 
 /**
@@ -220,4 +236,48 @@ startmenu(Status):-
     readLine(Line, Length),
     startmenuParser(Line, Length, Status),
     startmenuParserHandler(Status),
+  !.
+
+
+/**
+* Analyses the line read and returns the corresponding status
+*
+* @param +Line Input read
+* @param +Length Length of input line
+* @param -Status Exit status
+*/
+
+% return to startmenu
+gameovermenuParser([], 0, good):- !.
+
+% unexpected input
+gameovermenuParser(_, _, error).
+
+
+/**
+* Decides how to act based on the exit status of gameovermenuParser/3
+*
+* @param +Status Exit status of gameoverParser/3
+*/
+
+% return to startmenu
+gameovermenuParserHandler(good).
+
+% unexpected input
+gameovermenuParserHandler(error):-
+  dsp_pressEnter,
+  fail.
+
+
+/**
+* Shows gameover screen
+*
+* @param +Winner Player that won the game
+*/
+gameovermenu(Winner):-
+  dsp_gameover(Winner),
+  repeat,
+    readLine(Line, Length),
+    gameovermenuParser(Line, Length, Status),
+    gameovermenuParserHandler(Status),
   !.
