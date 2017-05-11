@@ -19,12 +19,23 @@ dsp_invalidPlay:- write('\nInvalid play, please try again...\n').
 
 dsp_pressEnter:- write('\nPress ENTER to continue...\n').
 
+% @param +Player Current player's turn
+dsp_playerTurn(Player):-
+  toString(Player, Name),
+  write('\nPlayer\'s turn: '),
+  write(Name), nl.
+
+% @param +Player Current player's turn
+dsp_botTurn(Player):-
+  dsp_playerTurn(Player),
+  write('\nIt\'s the Bot\'s turn!'),
+  dsp_pressEnter.
+
 dsp_goodbye:- write('\nExited program. Goodbye.\n\n').
 
 % @param +Player Current player's turn
 dsp_choosePiece(Player):-
-  toString(Player, Name),
-  write('\nPlayer\'s turn: '), write(Name), nl,
+  dsp_playerTurn(Player),
   write('\nChoose a piece to move. (e.g. a4)\nType \'e\' to return to the start menu.\n').
 
 dsp_placePiece:- write('\nWhere do you want to place the piece? (e.g. b4)\nType \'e\' to return to the start menu.\n').
@@ -35,7 +46,11 @@ dsp_startmenu:-
   nl,
   write(' ******************** TABLUT ********************'), nl,
   write(' *                                              *'), nl,
-  write(' *  Type \'e\' to exit, or press ENTER to start!  *'), nl,
+  write(' *          Choose an option to start!          *'), nl,
+  write(' *                                              *'), nl,
+  write(' *          1. Human vs Human                   *'), nl,
+  write(' *          2. Human vs Bot                     *'), nl,
+  write(' *          3. Exit                             *'), nl,
   write(' *                                              *'), nl,
   write(' ************************************************'), nl,
   nl.
@@ -195,17 +210,26 @@ askPos(Player, Col, Row, NewCol, NewRow, Status):-
 * @param -Status Exit status
 */
 
-% exit button pressed, close the program
-startmenuParser([Code], 1, exit):-
-  exitCode(Code),
+% 1. Human vs Human
+startmenuParser([Code], 1, hvh):-
+  int_code(Int, Code),
+  Int = 1,
   !.
 
-% ENTER pressed, start the game
-startmenuParser([], 0, good):- !.
+% 2. Human vs Bot
+startmenuParser([Code], 1, hvb):-
+  int_code(Int, Code),
+  Int = 2,
+  !.
+
+% 3. Exit
+startmenuParser([Code], 1, exit):-
+  int_code(Int, Code),
+  Int = 3,
+  !.
 
 % unexpected input
 startmenuParser(_, _, error):- !.
-
 
 /**
 * Decides how to act based on the exit status of startmenuParser/3
@@ -213,16 +237,17 @@ startmenuParser(_, _, error):- !.
 * @param +Status Exit status of startmenuParser/3
 */
 
-% start the game
-startmenuParserHandler(good).
-
 % exit the program
-startmenuParserHandler(exit):- dsp_goodbye.
+startmenuParserHandler(exit):- !, dsp_goodbye.
 
 % unexpected input
 startmenuParserHandler(error):-
+  !,
   dsp_invalidInput,
   fail.
+
+% start the game
+startmenuParserHandler(_).
 
 
 /**
@@ -240,33 +265,13 @@ startmenu(Status):-
 
 
 /**
-* Analyses the line read and returns the corresponding status
+* Waits until the user presses ENTER
 *
 * @param +Line Input read
 * @param +Length Length of input line
-* @param -Status Exit status
 */
-
-% return to startmenu
-gameovermenuParser([], 0, good):- !.
-
-% unexpected input
-gameovermenuParser(_, _, error).
-
-
-/**
-* Decides how to act based on the exit status of gameovermenuParser/3
-*
-* @param +Status Exit status of gameoverParser/3
-*/
-
-% return to startmenu
-gameovermenuParserHandler(good).
-
-% unexpected input
-gameovermenuParserHandler(error):-
-  dsp_pressEnter,
-  fail.
+waitEnter([], 0):- !.
+waitEnter(_, _):- dsp_pressEnter, fail.
 
 
 /**
@@ -278,6 +283,18 @@ gameovermenu(Winner):-
   dsp_gameover(Winner),
   repeat,
     readLine(Line, Length),
-    gameovermenuParser(Line, Length, Status),
-    gameovermenuParserHandler(Status),
+    waitEnter(Line, Length),
+  !.
+
+
+/**
+* Tells the user it's the bot's turn to play
+*
+* @param +Player Current player's turn
+*/
+botTurn(Player):-
+  dsp_botTurn(Player),
+  repeat,
+    readLine(Line, Length),
+    waitEnter(Line, Length),
   !.

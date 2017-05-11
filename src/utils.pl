@@ -1,6 +1,8 @@
-/**
+/** TODO clean docs and delete findPos, since find now works with constraints
 * This file implements multiple utilities used through out this program
 */
+
+:- use_module(library(clpfd)).
 
 /**
 * Finds an element in a list (same as nth0)
@@ -10,7 +12,7 @@
 * @param -Elem Returns element found
 */
 find(0, [H|_], H).
-find(X, [_|T], Elem):- X > 0, NewX is X - 1, find(NewX, T, Elem).
+find(X, [_|T], Elem):- X #> 0, NewX #= X - 1, find(NewX, T, Elem).
 
 
 /**
@@ -22,7 +24,7 @@ find(X, [_|T], Elem):- X > 0, NewX is X - 1, find(NewX, T, Elem).
 * @param -Elem Element found
 */
 find(X, 0, [H|_], Elem):- find(X, H, Elem).
-find(X, Y, [_|T], Elem):- Y > 0, NewY is Y - 1, find(X, NewY, T, Elem).
+find(X, Y, [_|T], Elem):- Y #> 0, NewY #= Y - 1, find(X, NewY, T, Elem).
 
 
 /**

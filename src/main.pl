@@ -8,25 +8,45 @@ TODO review and remove unecessary cuts
 */
 
 :- ensure_loaded('board.pl').
+:- ensure_loaded('bot.pl').
 :- ensure_loaded('interface.pl').
 :- ensure_loaded('player.pl').
+
+/**
+* Switches turn
+*
+* @param +Type Type of game (hvh, hvb)
+* @param +Bot Yes if bot is current player. No if current player is human
+* @param -NextBot Yes if bot is next player. No if next player is human
+*/
+switchTurn(hvh, no, no).
+switchTurn(hvb, no, yes).
+switchTurn(hvb, yes, no).
 
 
 /**
 * Game Loop - Where the magic happens
 *
+* @param +Type Type of game (hvh, hvb)
+* @param +Bot Yes if bot is current player. No if current player is human
 * @param +Board Current state of the game board
 * @param +Player Current player's turn
 * @param +Gamestate Current state of the game
 */
-gameloop(Board, Player, Gamestate):-
+gameloop(Type, Bot, Board, Player, Gamestate):-
 
   % repeat until user inputs a valid play
   repeat,
 
     (\+gameover(Gamestate) ->
-      % process input
-      askPos(Player, Col, Row, NewCol, NewRow, Status)
+      (Bot = no ->
+        % process input
+        askPos(Player, Col, Row, NewCol, NewRow, Status)
+      ;
+        botTurn(Player),
+        randomBot(Board, Player, Col, Row, NewCol, NewRow),
+        Status = good
+      )
     ;
       switchPlayer(Player, Winner),
       gameovermenu(Winner),
@@ -57,8 +77,9 @@ gameloop(Board, Player, Gamestate):-
                     ),
 
                     % repeat
+                    switchTurn(Type, Bot, NextBot),
                     switchPlayer(Player, NextPlayer),
-                    gameloop(NewNewBoard, NextPlayer, NewGamestate)
+                    gameloop(Type, NextBot, NewNewBoard, NextPlayer, NewGamestate)
                   )
               ;   (
                     dsp_invalidPlay,
@@ -75,14 +96,14 @@ gameloop(Board, Player, Gamestate):-
 * Main entry for the program
 */
 main:-
-  startmenu(Status),
+  startmenu(Type),
   % if user started the game
-  (Status \= exit
+  (Type \= exit
     ->  (
           initial_board(Board),
           firstPlayer(Player),
           printBoard(Board),
-          gameloop(Board, Player, normal),
+          gameloop(Type, no, Board, Player, normal),
           main
         )
     ; true % close program
