@@ -584,6 +584,7 @@ update(Board, Player, NewBoard, UpdatedState):-
 *
 * @param +Log Log of plays
 * @param +Board Board
+* @param +State State of the game
 * @param +Player Info to add to log
 * @param +Col Info to add to log
 * @param +Row Info to add to log
@@ -591,7 +592,7 @@ update(Board, Player, NewBoard, UpdatedState):-
 * @param +NRow Info to add to log
 * @param -NewLog New log of plays
 */
-updateLog(Log, Board, Player, Col, Row, NCol, NRow, NewLog):-
+updateLog(Log, Board, State, Player, Col, Row, NCol, NRow, NewLog):-
   rotate_list(TLog, Log),
   replace(0, TLog, 'Game Log', TTLog),
   toString(Player, PlayerName),
@@ -603,7 +604,16 @@ updateLog(Log, Board, Player, Col, Row, NCol, NRow, NewLog):-
   char_code(DspNCol, NColCode),
   DspRow is Row + 1,
   DspNRow is NRow + 1,
-  concat([PlayerName, ': moved ', PieceName, ' from ', DspCol, DspRow, ' to ', DspNCol, DspNRow], Entry),
+  concat([PlayerName, ': moved ', PieceName, ' from ', DspCol, DspRow, ' to ', DspNCol, DspNRow], TempEntry),
+  ( State = check ->
+      concat([TempEntry, ' (KING HAS ONE PATH OF ESCAPE)'], Entry)
+  ; State = checkmate ->
+      concat([TempEntry, ' (KING HAS ESCAPED)'], Entry)
+  ; State = captured ->
+      concat([TempEntry, ' (KING HAS BEEN CAPTURED)'], Entry)
+  ; otherwise ->
+      Entry = TempEntry
+  ),
   replace(1, TTLog, Entry, NewLog).
 
 

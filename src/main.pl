@@ -64,18 +64,14 @@ gameloop(Type, Bot, Board, Player, Gamestate, Log):-
 
                     % update
                     update(NewBoard, Player, NewNewBoard, NewGamestate),
-                    updateLog(Log, Board, Player, Col, Row, NewCol, NewRow, NewLog),
+                    updateLog(Log, Board, NewGamestate, Player, Col, Row, NewCol, NewRow, NewLog),
 
                     % render
                     (NewGamestate = captured ->
                       % print NOT updated board, in case important pieces were captured
                       printBoard(NewBoard, NewLog)
                     ;
-                      printBoard(NewNewBoard, NewLog),
-                      (NewGamestate = check ->
-                        dsp_check
-                      ; true
-                      )
+                      printBoard(NewNewBoard, NewLog)
                     ),
 
                     % repeat
