@@ -32,8 +32,9 @@ switchTurn(hvb, yes, no).
 * @param +Board Current state of the game board
 * @param +Player Current player's turn
 * @param +Gamestate Current state of the game
+* @param +Log Log of plays
 */
-gameloop(Type, Bot, Board, Player, Gamestate):-
+gameloop(Type, Bot, Board, Player, Gamestate, Log):-
 
   % repeat until user inputs a valid play
   repeat,
@@ -63,13 +64,14 @@ gameloop(Type, Bot, Board, Player, Gamestate):-
 
                     % update
                     update(NewBoard, Player, NewNewBoard, NewGamestate),
+                    updateLog(Log, Board, Player, Col, Row, NewCol, NewRow, NewLog),
 
                     % render
                     (NewGamestate = captured ->
                       % print NOT updated board, in case important pieces were captured
-                      printBoard(NewBoard)
+                      printBoard(NewBoard, NewLog)
                     ;
-                      printBoard(NewNewBoard),
+                      printBoard(NewNewBoard, NewLog),
                       (NewGamestate = check ->
                         dsp_check
                       ; true
@@ -79,7 +81,7 @@ gameloop(Type, Bot, Board, Player, Gamestate):-
                     % repeat
                     switchTurn(Type, Bot, NextBot),
                     switchPlayer(Player, NextPlayer),
-                    gameloop(Type, NextBot, NewNewBoard, NextPlayer, NewGamestate)
+                    gameloop(Type, NextBot, NewNewBoard, NextPlayer, NewGamestate, NewLog)
                   )
               ;   (
                     dsp_invalidPlay,
@@ -102,8 +104,9 @@ main:-
     ->  (
           initial_board(Board),
           firstPlayer(Player),
-          printBoard(Board),
-          gameloop(Type, no, Board, Player, normal),
+          getLog(Log),
+          printBoard(Board, Log),
+          gameloop(Type, no, Board, Player, normal, Log),
           main
         )
     ; true % close program

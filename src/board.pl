@@ -55,6 +55,17 @@ toChar(atkarea, 'X').
 
 
 /**
+* Returns the name of each piece
+*
+* @param +Piece Piece
+* @param -String Name of the piece
+*/
+pieceToString(attacker, 'Attacker').
+pieceToString(defender, 'Defender').
+pieceToString(king, 'King').
+
+
+/**
 * Checks if two pieces are enemies
 *
 * @param +PieceA First piece
@@ -105,10 +116,10 @@ getRowIds([' 1 ', ' 2 ', ' 3 ', ' 4 ', ' 5 ', ' 6 ', ' 7 ', ' 8 ', ' 9 ']).
 
 
 /**
-* Get list containing information to display to the user
+* Get initial empty log
 * (length MUST be the same as board rows!)
 */
-getInfo(['A - Attacker', 'C - Castle', 'D - Defender', 'K - King', 'X - Attackers\' Area', '', '', '', '']).
+getLog(['Game Log', '', '', '', '', '', '', '', '']).
 
 
 /*
@@ -153,14 +164,14 @@ printBoard([H | T], [RH | RT], [IH | IT]):-
 * Interface for printBoard/3
 *
 * @param +Board List of lists to print
+* @param +Log Log of plays
 */
-printBoard(Board):-
+printBoard(Board, Log):-
   nl,
   printColIds, nl,
   getRowIds(RowIds),
-  getInfo(Info),
   printSeparator(topmost), nl,
-  printBoard(Board, RowIds, Info),
+  printBoard(Board, RowIds, Log),
   nl.
 
 
@@ -566,6 +577,34 @@ update(Board, Player, NewBoard, UpdatedState):-
     Player = defplayer,
     gamestate(NewBoard, UpdatedState)
   ).
+
+
+/**
+* Updates the game log
+*
+* @param +Log Log of plays
+* @param +Board Board
+* @param +Player Info to add to log
+* @param +Col Info to add to log
+* @param +Row Info to add to log
+* @param +NCol Info to add to log
+* @param +NRow Info to add to log
+* @param -NewLog New log of plays
+*/
+updateLog(Log, Board, Player, Col, Row, NCol, NRow, NewLog):-
+  rotate_list(TLog, Log),
+  replace(0, TLog, 'Game Log', TTLog),
+  toString(Player, PlayerName),
+  find(Col, Row, Board, Piece),
+  pieceToString(Piece, PieceName),
+  ColCode is Col + "A",
+  char_code(DspCol, ColCode),
+  NColCode is NCol + "A",
+  char_code(DspNCol, NColCode),
+  DspRow is Row + 1,
+  DspNRow is NRow + 1,
+  concat([PlayerName, ': moved ', PieceName, ' from ', DspCol, DspRow, ' to ', DspNCol, DspNRow], Entry),
+  replace(1, TTLog, Entry, NewLog).
 
 
 /**

@@ -73,3 +73,42 @@ findPos(X, [_|T], Elem):- findPos(Aux, T, Elem), X is Aux + 1.
 */
 findPos(X, 0, [H|_], Elem):- findPos(X, H, Elem).
 findPos(X, Y, [_|T], Elem):- findPos(X, Aux, T, Elem), Y is Aux + 1.
+
+
+/**
+* Concatenates two atoms (e.g. 'I am ' + 21 = 'I am 21')
+*
+* @param +X First atom to concatenate
+* @param +Y Second atom to concatenate
+* @param -S Concatenation of X and Y
+*/
+concat(X, Y, S):-
+  name(X, Xs),
+  name(Y, Ys),
+  append(Xs, Ys, Ss),
+  name(S, Ss),
+  write(S).
+
+
+/**
+* Concatenates all atoms in the given list
+*
+* @param +List Atoms to concatenate
+* @param -Ss List of all (ascii) codes concatenated
+*/
+concatAux([], []).
+concatAux([H | T], Ss):-
+  name(H, Hs),
+  append(Hs, Aux, Ss),
+  concatAux(T, Aux).
+
+
+/**
+* Concatenates all atoms in the given list
+*
+* @param +List Atoms to concatenate
+* @param -S Concatenation of all atoms
+*/
+concat(List, S):-
+  concatAux(List, Ss),
+  name(S, Ss).
