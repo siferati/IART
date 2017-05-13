@@ -378,16 +378,16 @@ captured(Board, king, Col, Row):- !,
   ( \+ (LCol < 0 | RCol > 8 | TRow < 0 | DRow > 8) ->
     % right
     find(LCol, Row, Board, LPiece),
-    enemy(Piece, LPiece),
+    enemy(king, LPiece),
     % left
     find(RCol, Row, Board, RPiece),
-    enemy(Piece, RPiece),
+    enemy(king, RPiece),
     % top
     find(Col, TRow, Board, TPiece),
-    enemy(Piece, TPiece),
+    enemy(king, TPiece),
     % down
     find(Col, DRow, Board, DPiece),
-    enemy(Piece, DPiece)
+    enemy(king, DPiece)
   ).
 
 % defenders and attackers
