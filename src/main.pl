@@ -45,7 +45,7 @@ gameloop(Type, Bot, Board, Player, Gamestate, Log):-
         askPos(Player, Col, Row, NewCol, NewRow, Status)
       ;
         botTurn(Player),
-        randomBot(Board, Player, Col, Row, NewCol, NewRow),
+        thinkMove(Board, Player, 2, Col-Row-NewCol-NewRow),
         Status = good
       )
     ;
