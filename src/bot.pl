@@ -45,8 +45,120 @@ getAllValidMoves(Board, Player, Plays) :-
 * @param -Score: Player score
 */
 
-getScore(_, atkplayer, Score) :- Score = 1.
-getScore(_, defplayer, Score) :- Score = -1.
+getScore(Board, Score) :- 
+	numberOfEscapes(Board,Escapes),
+	Atackers = 0,
+	Defenders = 0,
+	NCoveredLines = 0,
+	NCoveredDiag = 0,
+	getCaptured(Board,Captured),
+	countRemovedPieces(Captured,Atackers,Defenders),
+	countCoveredLines(Board,NCoveredLines),
+	countCoveredDiag(Board,NCoveredDiag),
+	Score is ( ( Escapes * 10 ) + ( Atackers - Defenders ) + ( NCoveredLines * 2 ) + NCoveredDiag )
+.
+/*getScore(_, defplayer, Score) :- Score = -1.*/
+
+/**
+* Gets number of possible king escapes
+*
+* @param +Board: Current board
+* @param -Escapes: Number of escapes
+*/
+numberOfEscapes(Board,Escapes):-
+  	findPos(Col, Row, Board, king),
+	( % right
+	  clearPath(Board, Col, Row, 8, Row),
+	  Right = 1
+	|
+	  Right = 0
+	),
+	( % left
+	  clearPath(Board, Col, Row, 0, Row),
+	  Left = 1
+	|
+	  Left = 0
+	),
+	( % top
+	  clearPath(Board, Col, Row, Col, 0),
+	  Top = 1
+	|
+	  Top = 0
+	),
+	( % down
+	  clearPath(Board, Col, Row, Col, 8),
+	  Down = 1
+	|
+	  Down = 0
+	),
+	Escapes is (Right + Left + Top + Down) 
+.
+
+/**
+* Gets each side ingame count of removed pieces
+*
+* @param +[Piece | Rest]: List of Captured pieces 
+* @param -Atackers: Number of Atackers pieces
+* @param -Defenders: Number of Defenders pieces
+*/
+countRemovedPieces([],_,_).
+countRemovedPieces([Piece|Rest],Atackers,Defenders):-
+	(
+		ownPiece(atkplayer,Piece),
+		NAtackers is Atackers + 1
+	|
+		ownPiece(defplayer,Piece),
+		NDefenders is Defenders + 1
+	),
+	countPieces(Rest,NAtackers,NDefenders)
+.
+/**
+* Gets number of lines that the king is protected
+*
+* @param +Board: Current board
+* @param -NCoveredLines: Number of lines protected
+*/
+countCoveredLines(Board,NCoveredLines).
+/**
+* Gets number of adjacent diagonals that king is "protected" (offers a better likely hood to protect the king)
+*
+* @param +Board: Current board
+* @param -NCoveredDiag: Number of diagonals protected
+*/
+countCoveredDiag(Board,NCoveredDiag):-
+	findPos(Col, Row, Board, king),
+	(%down&right
+		findPos(Col+1,Row+1,Board,Piece),
+		ownPiece(defplayer,Piece),
+		DownRight = 1
+	|
+		DownRight = 0
+	),
+	(%top&right
+		findPos(Col+1,Row-1,Board,Piece),
+		ownPiece(defplayer,Piece),
+		TopRight = 1
+	|
+		TopRight = 0
+	),
+	(%down&left
+		findPos(Col-1,Row+1,Board,Piece),
+		ownPiece(defplayer,Piece),
+		DownLeft = 1
+	|
+		DownLeft = 0
+	),
+	(%top&left
+		findPos(Col-1,Row-1,Board,Piece),
+		ownPiece(defplayer,Piece),
+		TopLeft = 1
+	|
+		TopLeft = 0
+	),
+	NCoveredDiag is (DownRight + DownLeft + TopRight + TopLeft)
+.
+
+
 
 /**
 * Maximizing level of minimax algorithm
@@ -124,4 +236,4 @@ minimax(Board, min, NextPlayer, Depth, Difficulty, Move, Value):-
 	
 minimax(Board, _, Player, _, _, OCol-ORow-NCol-NRow, Value) :-
 	move(Board, OCol, ORow, NCol, NRow, NewBoard),
-	getScore(NewBoard, Player, Value).
+	getScore(NewBoard, Value).
