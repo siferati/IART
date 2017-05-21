@@ -51,22 +51,18 @@ getAllValidMoves(Board, Player, Plays) :-
 */
 
 getScore(Board, Score) :- 
-	%getCaptured(Board,Captured),
-	%removeCaptured(Board,Captured,NewBoard),
 	countPieces(Board,Atackers,Defenders),
 	NAtackers is (16-Atackers),
 	NDefenders is (9-Defenders),
 	numberOfEscapes(Board,Escapes),
 	numberOfEnemiesNextToKing(Board,Enemies),
 	numberOfDefendersNextToKing(Board,DefNextToKing),
-	%countCoveredLines(Board,NCoveredLines),
 	countCoveredDiag(Board,NCoveredDiag),
+	valueKingPosition(Board,ValueKingPosition),
+	%valueAtackersPosition(Board,0,ValueAttackersPosition),
 	Diff is NAtackers-NDefenders,
-	Score is Escapes*10 + Diff + DefNextToKing*2 + NCoveredDiag - (Enemies*4) %+ ( NCoveredLines * 2 ) + NCoveredDiag
+	Score is Escapes*10 + Diff + DefNextToKing*2 + NCoveredDiag - (Enemies*4) + ValueKingPosition,! % +ValueAttackersPosition,!
 .
-
-%getScore(_, atkplayer, Score) :- Score = 1.
-%getScore(_, defplayer, Score) :- Score = -1.
 
 /**
 * Gets number of possible king escapes
@@ -103,6 +99,12 @@ numberOfEscapes(Board,Escapes):-
 	Escapes is (Right + Left + Top + Down) 
 .
 
+/**
+* Gets number of enemies adjacent to the king
+*
+* @param +Board: Current board
+* @param -Enemies: Number of enemies
+*/
 numberOfEnemiesNextToKing(Board,Enemies):-
 	findPos(Col, Row, Board, king),
 	(%top
@@ -140,6 +142,12 @@ numberOfEnemiesNextToKing(Board,Enemies):-
 	Enemies is (Right + Left + Top + Down)
 .
 
+/**
+* Gets number of defenders adjacent to the king
+*
+* @param +Board: Current board
+* @param -Escapes: Number of escapes
+*/
 numberOfDefendersNextToKing(Board,Defenders):-
 	findPos(Col, Row, Board, king),
 	(%top
@@ -178,9 +186,9 @@ numberOfDefendersNextToKing(Board,Defenders):-
 .
 
 /**
-* Gets each side ingame count of removed pieces
+* Gets each side ingame pieces count
 *
-* @param +[Piece | Rest]: List of Captured pieces 
+* @param +[Line | Lines]: Board 
 * @param -Atackers: Number of Atackers pieces
 * @param -Defenders: Number of Defenders pieces
 */
@@ -192,7 +200,13 @@ countPieces([Line|Lines],Atackers,Defenders):-
 	Atackers is (NAtackers + NNAtackers),
 	Defenders is (NDefenders + NNDefenders).
 
-
+/**
+* Gets each side ingame pieces count in a line
+*
+* @param +[Piece | Rest]: Line of the board
+* @param -Atackers: Number of Atackers pieces
+* @param -Defenders: Number of Defenders pieces
+*/
 countPiecesAux([],0,0).
 countPiecesAux([Piece|Rest],Atackers,Defenders):-
     countPiecesAux(Rest,NAtackers,NDefenders),
@@ -209,42 +223,7 @@ countPiecesAux([Piece|Rest],Atackers,Defenders):-
         Atackers = NAtackers
     )
 .
-/*
-countRemovedPiecesAux([],Atackers,Defenders).
-countRemovedPiecesAux([Piece|Rest],Atackers,Defenders):-
-	(
-		ownPiece(atkplayer,Piece),
-		NAtackers is Atackers + 1,
-		NDefenders = Defenders
-	|
-		ownPiece(defplayer,Piece),
-		NDefenders is Defenders + 1,
-		NAtackers = Atackers
-	|
-		NDefenders = Defenders,
-		NAtackers = Atackers
-	),
-	countRemovedPiecesAux(Rest,NAtackers,NDefenders)
-.*/
-/*countRemovedPieces([],Atackers,Defenders).
-countRemovedPieces([Piece-Col-Row|Rest],Atackers,Defenders):-
-	(
-		ownPiece(atkplayer,Piece),
-		NAtackers is Atackers + 1
-	|
-		ownPiece(defplayer,Piece),
-		NDefenders is Defenders + 1
-	),
-	countRemovedPieces(Rest,NAtackers,NDefenders)
-.*/
 
-/**
-* Gets number of lines that the king is protected
-*
-* @param +Board: Current board
-* @param -NCoveredLines: Number of lines protected
-*/
-%countCoveredLines(Board,NCoveredLines).
 /**
 * Gets number of adjacent diagonals that king is "protected" (offers a better likely hood to protect the king)
 *
@@ -291,6 +270,35 @@ countCoveredDiag(Board,NCoveredDiag):-
 	),
 	NCoveredDiag is (DownRight + DownLeft + TopRight + TopLeft)
 .
+
+valueKingPosition(Board,Value):-
+	findPos(Col, Row, Board, king),
+	value_board(Values),
+	findPos(Col, Row, Values, Value)
+.
+
+/*valueAtackersPosition([],_,0).
+valueAtackersPosition([Line | Lines],Row,Value):-
+	NRow is Row+1,
+	valueAtackersPosition(Lines,NRow,NValue),
+	valueAtackersPositionAux(Line,Row,0,NNValue),
+	Value is NValue + NNValue,!
+.
+
+valueAtackersPositionAux([],_,_0).
+valueAtackersPositionAux([Piece | Rest],Row,Col,Value):-
+	NCol is Col + 1,
+	value_board(Values),
+	valueAtackersPositionAux(Rest,Row,NCol,NValue),
+	(
+		player(atkplayer, Piece),
+		findPos(Col,Row,Values,NNValue),
+		Value is NValue + NNValue
+	|
+		Value is NValue
+	),!
+.*/
+	
 
 
 
@@ -365,12 +373,12 @@ minValue(Board, [OCol-ORow-NCol-NRow|OEs], Depth, Difficulty, NP, Eant, Beta, Er
 minimax(Board, max, Player, Depth, Difficulty, Move, Value, Alpha, Beta):-
 	Depth \= Difficulty,
 	getAllValidMoves(Board, Player, ListMoves),
-	maxValue(Board, ListMoves, Depth, Difficulty, Player, _, Alpha, Move, Value, Beta).
+	maxValue(Board, ListMoves, Depth, Difficulty, Player, _, Alpha, Move, Value, Beta),!.
 	
 minimax(Board, min, NextPlayer, Depth, Difficulty, Move, Value, Alpha, Beta):-
 	Depth \= Difficulty,
 	getAllValidMoves(Board, NextPlayer, ListMoves),
-	minValue(Board, ListMoves, Depth, Difficulty, NextPlayer, _, Beta, Move, Value, Alpha).
+	minValue(Board, ListMoves, Depth, Difficulty, NextPlayer, _, Beta, Move, Value, Alpha),!.
 	
 minimax(Board, _, _, _, _, _, Value, _, _) :-
-	getScore(Board, Value).
+	getScore(Board, Value),!.

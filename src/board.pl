@@ -39,6 +39,18 @@ initial_board([
   [emptyCell, emptyCell, emptyCell, attacker, attacker, attacker, emptyCell, emptyCell, emptyCell]
 ]).
 
+value_board([
+  [3, 3, 4, 0, 0, 0, 4, 3, 3],
+  [3, 3, 4, 2, 0, 2, 4, 3, 3],
+  [4, 4, 5, 3, 3, 3, 5, 4, 4],
+  [0, 2, 3, 1, 1, 1, 3, 2, 0],
+  [0, 0, 3, 1, 0, 1, 3, 0, 0],
+  [0, 2, 3, 1, 1, 1, 3, 2, 0],
+  [4, 4, 5, 3, 3, 3, 5, 4, 4],
+  [3, 3, 4, 2, 0, 2, 4, 3, 3],
+  [3, 3, 4, 0, 0, 0, 4, 3, 3]
+]).
+
 
 /**
 * Translates board symbols into chars, for easier printing
