@@ -50,7 +50,34 @@ dsp_startmenu:-
   write(' *                                              *'), nl,
   write(' *          1. Human vs Human                   *'), nl,
   write(' *          2. Human vs Bot                     *'), nl,
-  write(' *          3. Exit                             *'), nl,
+  write(' *          3. Bot vs Bot                       *'), nl,
+  write(' *          4. Exit                             *'), nl,
+  write(' *                                              *'), nl,
+  write(' ************************************************'), nl,
+  nl.
+  
+  
+dsp_difficulty:-
+  nl,
+  write(' ******************* SETTINGS *******************'), nl,
+  write(' *                                              *'), nl,
+  write(' *          Choose an difficulty to play.       *'), nl,
+  write(' *                                              *'), nl,
+  write(' *          1. Easy                             *'), nl,
+  write(' *          2. Medium                           *'), nl,
+  write(' *          3. Difficult                        *'), nl,
+  write(' *                                              *'), nl,
+  write(' ************************************************'), nl,
+  nl.
+  
+dsp_getplayer:-
+  nl,
+  write(' ******************* SETTINGS *******************'), nl,
+  write(' *                                              *'), nl,
+  write(' *          Choose your player.                 *'), nl,
+  write(' *                                              *'), nl,
+  write(' *          1. Attackers                        *'), nl,
+  write(' *          2. Defenders                        *'), nl,
   write(' *                                              *'), nl,
   write(' ************************************************'), nl,
   nl.
@@ -202,6 +229,41 @@ askPos(Player, Col, Row, NewCol, NewRow, Status):-
   ).
 
 
+% 1. Human vs Human
+getDifficultyParser([Code], 1, 0):-
+  int_code(Int, Code),
+  Int = 1,
+  !.
+
+% 2. Human vs Bot
+getDifficultyParser([Code], 1, 1):-
+  int_code(Int, Code),
+  Int = 2,
+  !.
+
+% 3. Bot vs Bot
+getDifficultyParser([Code], 1, 2):-
+  int_code(Int, Code),
+  Int = 3,
+  !.
+
+% unexpected input
+getDifficultyParser(_, _, error):- !.
+
+% 1. atkplayer
+getHumanPlayerParser([Code], 1, atkplayer):-
+  int_code(Int, Code),
+  Int = 1,
+  !.
+
+% 2. defplayer
+getHumanPlayerParser([Code], 1, defplayer):-
+  int_code(Int, Code),
+  Int = 2,
+  !.
+
+% unexpected input
+
 /**
 * Analyses the line read and returns the corresponding status
 *
@@ -222,14 +284,21 @@ startmenuParser([Code], 1, hvb):-
   Int = 2,
   !.
 
-% 3. Exit
-startmenuParser([Code], 1, exit):-
+% 3. Bot vs Bot
+startmenuParser([Code], 1, bvb):-
   int_code(Int, Code),
   Int = 3,
+  !.
+  
+% 4. Exit
+startmenuParser([Code], 1, exit):-
+  int_code(Int, Code),
+  Int = 4,
   !.
 
 % unexpected input
 startmenuParser(_, _, error):- !.
+
 
 /**
 * Decides how to act based on the exit status of startmenuParser/3
@@ -255,14 +324,35 @@ startmenuParserHandler(_).
 *
 * @param +Status Exit status
 */
-startmenu(Status):-
+startmenu(Status, Difficulty, Player):-
   dsp_startmenu,
   repeat,
     readLine(Line, Length),
     startmenuParser(Line, Length, Status),
-    startmenuParserHandler(Status),
+	( Status == hvb ->
+		getDifficulty(Difficulty),
+		getHumanPlayer(Player)
+	; Status == bvb ->
+		getDifficulty(Difficulty)
+	; true
+	), startmenuParserHandler(Status),
   !.
 
+getDifficulty(Difficulty) :-
+	dsp_difficulty,
+	repeat,
+		readLine(Line, Length),
+		getDifficultyParser(Line, Length, Difficulty),
+		startmenuParserHandler(Difficulty),
+	   !.
+	   
+getHumanPlayer(Player) :-
+	dsp_getplayer,
+	repeat,
+		readLine(Line, Length),
+		getHumanPlayerParser(Line, Length, Player),
+		startmenuParserHandler(Player),
+	   !.		
 
 /**
 * Waits until the user presses ENTER

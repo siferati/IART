@@ -22,6 +22,7 @@ TODO review and remove unecessary cuts
 switchTurn(hvh, no, no).
 switchTurn(hvb, no, yes).
 switchTurn(hvb, yes, no).
+switchTurn(bvb, yes, yes).
 
 
 /**
@@ -34,7 +35,7 @@ switchTurn(hvb, yes, no).
 * @param +Gamestate Current state of the game
 * @param +Log Log of plays
 */
-gameloop(Type, Bot, Board, Player, Gamestate, Log):-
+gameloop(Type, Bot, Board, Player, Difficulty, Gamestate, Log):-
 
   % repeat until user inputs a valid play
   repeat,
@@ -45,7 +46,7 @@ gameloop(Type, Bot, Board, Player, Gamestate, Log):-
         askPos(Player, Col, Row, NewCol, NewRow, Status)
       ;
         botTurn(Player),
-        thinkMove(Board, Player, 2, Col-Row-NewCol-NewRow),
+        thinkMove(Board, Player, Difficulty, Col-Row-NewCol-NewRow),
         Status = good
       )
     ;
@@ -77,7 +78,7 @@ gameloop(Type, Bot, Board, Player, Gamestate, Log):-
                     % repeat
                     switchTurn(Type, Bot, NextBot),
                     switchPlayer(Player, NextPlayer),
-                    gameloop(Type, NextBot, NewNewBoard, NextPlayer, NewGamestate, NewLog)
+                    gameloop(Type, NextBot, NewNewBoard, NextPlayer, Difficulty, NewGamestate, NewLog)
                   )
               ;   (
                     dsp_invalidPlay,
@@ -94,16 +95,22 @@ gameloop(Type, Bot, Board, Player, Gamestate, Log):-
 * Main entry for the program
 */
 main:-
-  startmenu(Type),
+  startmenu(Type, Difficulty, Player),
   % if user started the game
   (Type \= exit
     ->  (
-          initial_board(Board),
-          firstPlayer(Player),
-          getLog(Log),
-          printBoard(Board, Log),
-          gameloop(Type, no, Board, Player, normal, Log),
-          main
+		initial_board(Board),
+        getLog(Log),
+        printBoard(Board, Log),
+		(Type == bvb ->
+		  firstPlayer(Player),
+		  gameloop(Type, yes, Board, Player, Difficulty, normal, Log)
+		; Type == hvb ->
+		  gameloop(Type, no, Board, Player, Difficulty, normal, Log)
+		; firstPlayer(Player),
+		  gameloop(Type, no, Board, Player, Difficulty, normal, Log)
+		),
+        main
         )
     ; true % close program
   ).
