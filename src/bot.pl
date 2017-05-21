@@ -20,7 +20,7 @@ thinkMove(Board, Player, 0, Move):-
 	random(0, NPlays, ChosenPlay),
 	find(ChosenPlay, Plays, Move).
 thinkMove(Board, Player, Difficulty, Move) :-
-	minimax(Board, max, Player, 0, Difficulty, Move, _).
+	minimax(Board, min, Player, 0, Difficulty, Move, _).
 
 /**
 * Gets list of valid moves
@@ -47,17 +47,21 @@ getAllValidMoves(Board, Player, Plays) :-
 
 getScore(Board, Score) :- 
 	numberOfEscapes(Board,Escapes),
-	Atackers = 0,
-	Defenders = 0,
-	NCoveredLines = 0,
-	NCoveredDiag = 0,
-	getCaptured(Board,Captured),
-	countRemovedPieces(Captured,Atackers,Defenders),
-	countCoveredLines(Board,NCoveredLines),
-	countCoveredDiag(Board,NCoveredDiag),
-	Score is ( ( Escapes * 10 ) + ( Atackers - Defenders ) + ( NCoveredLines * 2 ) + NCoveredDiag )
+	%write('Escapes: '),write(Escapes),nl,
+	%Atackers = 0,
+	%Defenders = 0,
+	%NCoveredLines = 0,
+	%NCoveredDiag = 0,
+	%getCaptured(Board,Captured),
+	%countRemovedPieces(Captured,Atackers,Defenders),
+	%countCoveredLines(Board,NCoveredLines),
+	%countCoveredDiag(Board,NCoveredDiag),
+	Score is Escapes*10 %+ ( Atackers - Defenders ) + ( NCoveredLines * 2 ) + NCoveredDiag
+	%write('Score: '), write(Score), nl
 .
-/*getScore(_, defplayer, Score) :- Score = -1.*/
+
+%getScore(_, atkplayer, Score) :- Score = 1.
+%getScore(_, defplayer, Score) :- Score = -1.
 
 /**
 * Gets number of possible king escapes
@@ -128,28 +132,36 @@ countCoveredLines(Board,NCoveredLines).
 countCoveredDiag(Board,NCoveredDiag):-
 	findPos(Col, Row, Board, king),
 	(%down&right
-		findPos(Col+1,Row+1,Board,Piece),
+		NCol is Col+1,
+		NRow is Row+1,
+		findPos(NCol,NRow,Board,Piece),
 		ownPiece(defplayer,Piece),
 		DownRight = 1
 	|
 		DownRight = 0
 	),
 	(%top&right
-		findPos(Col+1,Row-1,Board,Piece),
+		NCol is Col+1,
+		NRow is Row-1,
+		findPos(NCol,NRow,Board,Piece),
 		ownPiece(defplayer,Piece),
 		TopRight = 1
 	|
 		TopRight = 0
 	),
 	(%down&left
-		findPos(Col-1,Row+1,Board,Piece),
+		NCol is Col-1,
+		NRow is Row+1,
+		findPos(NCol,NRow,Board,Piece),
 		ownPiece(defplayer,Piece),
 		DownLeft = 1
 	|
 		DownLeft = 0
 	),
 	(%top&left
-		findPos(Col-1,Row-1,Board,Piece),
+		NCol is Col-1,
+		NRow is Row-1,
+		findPos(NCol,NRow,Board,Piece),
 		ownPiece(defplayer,Piece),
 		TopLeft = 1
 	|
@@ -237,3 +249,4 @@ minimax(Board, min, NextPlayer, Depth, Difficulty, Move, Value):-
 minimax(Board, _, Player, _, _, OCol-ORow-NCol-NRow, Value) :-
 	move(Board, OCol, ORow, NCol, NRow, NewBoard),
 	getScore(NewBoard, Value).
+	%write('value: '),write(Value),nl.
