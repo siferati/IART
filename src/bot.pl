@@ -20,7 +20,12 @@ thinkMove(Board, Player, 0, Move):-
 	random(0, NPlays, ChosenPlay),
 	find(ChosenPlay, Plays, Move).
 thinkMove(Board, Player, Difficulty, Move) :-
-	minimax(Board, min, Player, 0, Difficulty, Move, _).
+	(
+		firstPlayer(Player),
+		minimax(Board, max, Player, 0, Difficulty, Move, _)
+	|
+		minimax(Board, min, Player, 0, Difficulty, Move, _)
+	).
 
 /**
 * Gets list of valid moves
@@ -46,18 +51,18 @@ getAllValidMoves(Board, Player, Plays) :-
 */
 
 getScore(Board, Score) :- 
-	numberOfEscapes(Board,Escapes),
-	Atackers = 0,
-	Defenders = 0,
-	%NCoveredLines = 0,
-	%NCoveredDiag = 0,
 	%getCaptured(Board,Captured),
-	countRemovedPieces(Board,Atackers,Defenders),
+	%removeCaptured(Board,Captured,NewBoard),
+	countPieces(Board,Atackers,Defenders),
+	NAtackers is (16-Atackers),
+	NDefenders is (9-Defenders),
+	numberOfEscapes(Board,Escapes),
+	numberOfEnemiesNextToKing(Board,Enemies),
+	numberOfDefendersNextToKing(Board,DefNextToKing),
 	%countCoveredLines(Board,NCoveredLines),
-	%countCoveredDiag(Board,NCoveredDiag),
-	Diff is Atackers-Defenders,
-	Score is Escapes*10 + Diff %+ ( NCoveredLines * 2 ) + NCoveredDiag
-	%write('Score: '), write(Score), nl
+	countCoveredDiag(Board,NCoveredDiag),
+	Diff is NAtackers-NDefenders,
+	Score is Escapes*10 + Diff + DefNextToKing*2 + NCoveredDiag - (Enemies*4) %+ ( NCoveredLines * 2 ) + NCoveredDiag
 .
 
 %getScore(_, atkplayer, Score) :- Score = 1.
@@ -98,6 +103,80 @@ numberOfEscapes(Board,Escapes):-
 	Escapes is (Right + Left + Top + Down) 
 .
 
+numberOfEnemiesNextToKing(Board,Enemies):-
+	findPos(Col, Row, Board, king),
+	(%top
+		NRow is Row-1,
+		findPos(Col,NRow,Board,Piece),
+		ownPiece(atkplayer,Piece),
+		Top = 1
+	|
+		Top = 0
+	),
+	(%down
+		NRow is Row+1,
+		findPos(Col,NRow,Board,Piece),
+		ownPiece(atkplayer,Piece),
+		Down = 1
+	|
+		Down = 0
+	),
+	(%right
+		NCol is Col+1,
+		findPos(NCol,Row,Board,Piece),
+		ownPiece(atkplayer,Piece),
+		Right = 1
+	|
+		Right = 0
+	),
+	(%left
+		NCol is Col-1,
+		findPos(NCol,Row,Board,Piece),
+		ownPiece(atkplayer,Piece),
+		Left = 1
+	|
+		Left = 0
+	),
+	Enemies is (Right + Left + Top + Down)
+.
+
+numberOfDefendersNextToKing(Board,Defenders):-
+	findPos(Col, Row, Board, king),
+	(%top
+		NRow is Row-1,
+		findPos(Col,NRow,Board,Piece),
+		ownPiece(defplayer,Piece),
+		Top = 1
+	|
+		Top = 0
+	),
+	(%down
+		NRow is Row+1,
+		findPos(Col,NRow,Board,Piece),
+		ownPiece(defplayer,Piece),
+		Down = 1
+	|
+		Down = 0
+	),
+	(%right
+		NCol is Col+1,
+		findPos(NCol,Row,Board,Piece),
+		ownPiece(defplayer,Piece),
+		Right = 1
+	|
+		Right = 0
+	),
+	(%left
+		NCol is Col-1,
+		findPos(NCol,Row,Board,Piece),
+		ownPiece(defplayer,Piece),
+		Left = 1
+	|
+		Left = 0
+	),
+	Defenders is (Right + Left + Top + Down)
+.
+
 /**
 * Gets each side ingame count of removed pieces
 *
@@ -105,24 +184,50 @@ numberOfEscapes(Board,Escapes):-
 * @param -Atackers: Number of Atackers pieces
 * @param -Defenders: Number of Defenders pieces
 */
-countRemovedPieces([],Atackers,Defenders).
-countRemovedPieces([Line|Lines],Atackers,Defenders):-
-	countRemovedPiecesAux(Line,Atackers,Defenders),
-	countRemovedPieces(Lines,Atackers,Defenders).
+countPieces([],0,0).
+countPieces([Line|Lines],Atackers,Defenders):-
+	countPieces(Lines,NAtackers,NDefenders),
+	countPiecesAux(Line,NNAtackers,NNDefenders),
+	%nl,write('intermedios'),write(Atackers),write(Defenders),nl,
+	Atackers is (NAtackers + NNAtackers),
+	Defenders is (NDefenders + NNDefenders).
 
+
+countPiecesAux([],0,0).
+countPiecesAux([Piece|Rest],Atackers,Defenders):-
+    countPiecesAux(Rest,NAtackers,NDefenders),
+    (
+        ownPiece(atkplayer,Piece),
+        Atackers is NAtackers + 1,
+        Defenders = NDefenders
+    |
+        ownPiece(defplayer,Piece),
+        Defenders is NDefenders + 1,
+        Atackers = NAtackers
+    |
+        Defenders = NDefenders,
+        Atackers = NAtackers
+    )
+.
+/*
 countRemovedPiecesAux([],Atackers,Defenders).
 countRemovedPiecesAux([Piece|Rest],Atackers,Defenders):-
 	(
 		ownPiece(atkplayer,Piece),
-		NAtackers is Atackers + 1
+		NAtackers is Atackers + 1,
+		NDefenders = Defenders
 	|
 		ownPiece(defplayer,Piece),
-		NDefenders is Defenders + 1
+		NDefenders is Defenders + 1,
+		NAtackers = Atackers
+	|
+		NDefenders = Defenders,
+		NAtackers = Atackers
 	),
 	countRemovedPiecesAux(Rest,NAtackers,NDefenders)
-.
+.*/
 /*countRemovedPieces([],Atackers,Defenders).
-countRemovedPieces([Piece|Rest],Atackers,Defenders):-
+countRemovedPieces([Piece-Col-Row|Rest],Atackers,Defenders):-
 	(
 		ownPiece(atkplayer,Piece),
 		NAtackers is Atackers + 1
@@ -208,8 +313,10 @@ maxValue(_, [], _, _, _, E, V, E, V, _).
 maxValue(Board, [OCol-ORow-NCol-NRow|OEs], Depth, Difficulty, Player, Eant, Alpha, Eres, Vres, Beta):-
 	Depth1 is Depth + 1,
 	move(Board, OCol, ORow, NCol, NRow, B1),
+	getCaptured(B1,Captured),
+	removeCaptured(B1,Captured,NewBoard),
 	switchPlayer(Player, NP),
-	minimax(B1, min, NP, Depth1, Difficulty, _, V1),
+	minimax(NewBoard, min, NP, Depth1, Difficulty, _, V1),
 	((V1 > Alpha, AlphaAux = V1, Eaux = OCol-ORow-NCol-NRow)
 	; (AlphaAux = Alpha, Eaux = Eant)),
 	((V1 >= Beta, Eres = OCol-ORow-NCol-NRow, Vres = Beta)
@@ -234,8 +341,10 @@ minValue(_, [], _, _, _, E, V, E, V, _).
 minValue(Board, [OCol-ORow-NCol-NRow|OEs], Depth, Difficulty, NP, Eant, Beta, Eres, Vres, Alpha):-
 	Depth1 is Depth + 1,
 	move(Board, OCol, ORow, NCol, NRow, B1),
+	getCaptured(B1,Captured),
+	removeCaptured(B1,Captured,NewBoard),
 	switchPlayer(NP, Player),
-	minimax(B1, max, Player, Depth1, Difficulty, _, V1),
+	minimax(NewBoard, max, Player, Depth1, Difficulty, _, V1),
 	((V1 < Beta, BetaAux = V1, Eaux = OCol-ORow-NCol-NRow)
 	; (BetaAux = Beta, Eaux = Eant)),
 	((V1 =< Alpha, Eres = OCol-ORow-NCol-NRow, Vres = Alpha)
