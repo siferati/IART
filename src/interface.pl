@@ -263,6 +263,7 @@ getHumanPlayerParser([Code], 1, defplayer):-
   !.
 
 % unexpected input
+getHumanPlayerParser(_, _, error):- !.  
 
 /**
 * Analyses the line read and returns the corresponding status
