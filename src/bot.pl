@@ -22,9 +22,9 @@ thinkMove(Board, Player, 0, Move):-
 thinkMove(Board, Player, Difficulty, Move) :-
 	(
 		firstPlayer(Player),
-		minimax(Board, max, Player, 0, Difficulty, Move, _)
+		minimax(Board, max, Player, 0, Difficulty, Move, _, -9999, 99999)
 	|
-		minimax(Board, min, Player, 0, Difficulty, Move, _)
+		minimax(Board, min, Player, 0, Difficulty, Move, _, -9999, 99999)
 	).
 
 /**
@@ -313,10 +313,9 @@ maxValue(_, [], _, _, _, E, V, E, V, _).
 maxValue(Board, [OCol-ORow-NCol-NRow|OEs], Depth, Difficulty, Player, Eant, Alpha, Eres, Vres, Beta):-
 	Depth1 is Depth + 1,
 	move(Board, OCol, ORow, NCol, NRow, B1),
-	getCaptured(B1,Captured),
-	removeCaptured(B1,Captured,NewBoard),
+	update(B1, Player, B2, _),
 	switchPlayer(Player, NP),
-	minimax(NewBoard, min, NP, Depth1, Difficulty, _, V1),
+	minimax(B2, min, NP, Depth1, Difficulty, _, V1, Alpha, Beta),
 	((V1 > Alpha, AlphaAux = V1, Eaux = OCol-ORow-NCol-NRow)
 	; (AlphaAux = Alpha, Eaux = Eant)),
 	((V1 >= Beta, Eres = OCol-ORow-NCol-NRow, Vres = Beta)
@@ -341,10 +340,9 @@ minValue(_, [], _, _, _, E, V, E, V, _).
 minValue(Board, [OCol-ORow-NCol-NRow|OEs], Depth, Difficulty, NP, Eant, Beta, Eres, Vres, Alpha):-
 	Depth1 is Depth + 1,
 	move(Board, OCol, ORow, NCol, NRow, B1),
-	getCaptured(B1,Captured),
-	removeCaptured(B1,Captured,NewBoard),
+	update(B1, Player, B2, _),
 	switchPlayer(NP, Player),
-	minimax(NewBoard, max, Player, Depth1, Difficulty, _, V1),
+	minimax(B2, max, Player, Depth1, Difficulty, _, V1, Alpha, Beta),
 	((V1 < Beta, BetaAux = V1, Eaux = OCol-ORow-NCol-NRow)
 	; (BetaAux = Beta, Eaux = Eant)),
 	((V1 =< Alpha, Eres = OCol-ORow-NCol-NRow, Vres = Alpha)
@@ -362,17 +360,17 @@ minValue(Board, [OCol-ORow-NCol-NRow|OEs], Depth, Difficulty, NP, Eant, Beta, Er
 * @param -Value: Score of best move
 */
 	
-minimax(Board, max, Player, Depth, Difficulty, Move, Value):-
+minimax(Board, max, Player, Depth, Difficulty, Move, Value, Alpha, Beta):-
 	Depth \= Difficulty,
 	getAllValidMoves(Board, Player, ListMoves),
-	maxValue(Board, ListMoves, Depth, Difficulty, Player, _, -9999, Move, Value, 9999).
+	maxValue(Board, ListMoves, Depth, Difficulty, Player, _, Alpha, Move, Value, Beta).
 	
-minimax(Board, min, NextPlayer, Depth, Difficulty, Move, Value):-
+minimax(Board, min, NextPlayer, Depth, Difficulty, Move, Value, Alpha, Beta):-
 	Depth \= Difficulty,
 	getAllValidMoves(Board, NextPlayer, ListMoves),
-	minValue(Board, ListMoves, Depth, Difficulty, NextPlayer, _, 9999, Move, Value, -9999).
+	minValue(Board, ListMoves, Depth, Difficulty, NextPlayer, _, Beta, Move, Value, Alpha).
 	
-minimax(Board, _, Player, _, _, OCol-ORow-NCol-NRow, Value) :-
+minimax(Board, _, Player, _, _, OCol-ORow-NCol-NRow, Value, _, _) :-
 	move(Board, OCol, ORow, NCol, NRow, NewBoard),
-	getScore(NewBoard, Value).
-	%write('value: '),write(Value),nl.
+	update(NewBoard, Player, B2, _),
+	getScore(B2, Value).
