@@ -2,11 +2,6 @@
 * This file implements the core functions of the program, such as the game loop
 */
 
-/*
-TODO remove magic numbers from all src files, such as board width and height
-TODO review and remove unecessary cuts
-*/
-
 :- ensure_loaded('board.pl').
 :- ensure_loaded('bot.pl').
 :- ensure_loaded('interface.pl').

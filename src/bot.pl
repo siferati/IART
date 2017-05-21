@@ -244,7 +244,7 @@ countRemovedPieces([Piece-Col-Row|Rest],Atackers,Defenders):-
 * @param +Board: Current board
 * @param -NCoveredLines: Number of lines protected
 */
-countCoveredLines(Board,NCoveredLines).
+%countCoveredLines(Board,NCoveredLines).
 /**
 * Gets number of adjacent diagonals that king is "protected" (offers a better likely hood to protect the king)
 *
@@ -318,7 +318,7 @@ maxValue(Board, [OCol-ORow-NCol-NRow|OEs], Depth, Difficulty, Player, Eant, Alph
 	minimax(B2, min, NP, Depth1, Difficulty, _, V1, Alpha, Beta),
 	((V1 > Alpha, AlphaAux = V1, Eaux = OCol-ORow-NCol-NRow)
 	; (AlphaAux = Alpha, Eaux = Eant)),
-	((V1 >= Beta, Eres = OCol-ORow-NCol-NRow, Vres = Beta)
+	((AlphaAux >= Beta, Eres = OCol-ORow-NCol-NRow, Vres = Beta)
 	; maxValue(Board, OEs, Depth, Difficulty, Player, Eaux, AlphaAux, Eres, Vres, Beta)).
 
 /**
@@ -339,13 +339,15 @@ maxValue(Board, [OCol-ORow-NCol-NRow|OEs], Depth, Difficulty, Player, Eant, Alph
 minValue(_, [], _, _, _, E, V, E, V, _).
 minValue(Board, [OCol-ORow-NCol-NRow|OEs], Depth, Difficulty, NP, Eant, Beta, Eres, Vres, Alpha):-
 	Depth1 is Depth + 1,
+	
 	move(Board, OCol, ORow, NCol, NRow, B1),
 	update(B1, Player, B2, _),
 	switchPlayer(NP, Player),
+	
 	minimax(B2, max, Player, Depth1, Difficulty, _, V1, Alpha, Beta),
 	((V1 < Beta, BetaAux = V1, Eaux = OCol-ORow-NCol-NRow)
 	; (BetaAux = Beta, Eaux = Eant)),
-	((V1 =< Alpha, Eres = OCol-ORow-NCol-NRow, Vres = Alpha)
+	((Alpha >= BetaAux, Eres = OCol-ORow-NCol-NRow, Vres = Alpha)
 	; minValue(Board, OEs, Depth, Difficulty, NP, Eaux, BetaAux, Eres, Vres, Alpha)).
 
 /**
@@ -370,7 +372,5 @@ minimax(Board, min, NextPlayer, Depth, Difficulty, Move, Value, Alpha, Beta):-
 	getAllValidMoves(Board, NextPlayer, ListMoves),
 	minValue(Board, ListMoves, Depth, Difficulty, NextPlayer, _, Beta, Move, Value, Alpha).
 	
-minimax(Board, _, Player, _, _, OCol-ORow-NCol-NRow, Value, _, _) :-
-	move(Board, OCol, ORow, NCol, NRow, NewBoard),
-	update(NewBoard, Player, B2, _),
-	getScore(B2, Value).
+minimax(Board, _, _, _, _, _, Value, _, _) :-
+	getScore(Board, Value).
