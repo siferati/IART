@@ -47,16 +47,16 @@ getAllValidMoves(Board, Player, Plays) :-
 
 getScore(Board, Score) :- 
 	numberOfEscapes(Board,Escapes),
-	%write('Escapes: '),write(Escapes),nl,
-	%Atackers = 0,
-	%Defenders = 0,
+	Atackers = 0,
+	Defenders = 0,
 	%NCoveredLines = 0,
 	%NCoveredDiag = 0,
 	%getCaptured(Board,Captured),
-	%countRemovedPieces(Captured,Atackers,Defenders),
+	countRemovedPieces(Board,Atackers,Defenders),
 	%countCoveredLines(Board,NCoveredLines),
 	%countCoveredDiag(Board,NCoveredDiag),
-	Score is Escapes*10 %+ ( Atackers - Defenders ) + ( NCoveredLines * 2 ) + NCoveredDiag
+	Diff is Atackers-Defenders,
+	Score is Escapes*10 + Diff %+ ( NCoveredLines * 2 ) + NCoveredDiag
 	%write('Score: '), write(Score), nl
 .
 
@@ -105,7 +105,23 @@ numberOfEscapes(Board,Escapes):-
 * @param -Atackers: Number of Atackers pieces
 * @param -Defenders: Number of Defenders pieces
 */
-countRemovedPieces([],_,_).
+countRemovedPieces([],Atackers,Defenders).
+countRemovedPieces([Line|Lines],Atackers,Defenders):-
+	countRemovedPiecesAux(Line,Atackers,Defenders),
+	countRemovedPieces(Lines,Atackers,Defenders).
+
+countRemovedPiecesAux([],Atackers,Defenders).
+countRemovedPiecesAux([Piece|Rest],Atackers,Defenders):-
+	(
+		ownPiece(atkplayer,Piece),
+		NAtackers is Atackers + 1
+	|
+		ownPiece(defplayer,Piece),
+		NDefenders is Defenders + 1
+	),
+	countRemovedPiecesAux(Rest,NAtackers,NDefenders)
+.
+/*countRemovedPieces([],Atackers,Defenders).
 countRemovedPieces([Piece|Rest],Atackers,Defenders):-
 	(
 		ownPiece(atkplayer,Piece),
@@ -114,8 +130,9 @@ countRemovedPieces([Piece|Rest],Atackers,Defenders):-
 		ownPiece(defplayer,Piece),
 		NDefenders is Defenders + 1
 	),
-	countPieces(Rest,NAtackers,NDefenders)
-.
+	countRemovedPieces(Rest,NAtackers,NDefenders)
+.*/
+
 /**
 * Gets number of lines that the king is protected
 *
